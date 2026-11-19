@@ -20,6 +20,8 @@ export interface User {
   email: string;
   role: UserRole;
   phone?: string | null;
+  isActive?: boolean;
+  createdAt?: string;
   studentProfile?: StudentProfile | null;
   staffProfile?: StaffProfile | null;
 }

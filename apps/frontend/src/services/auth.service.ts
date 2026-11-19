@@ -1,4 +1,4 @@
-import { apiClient, setAccessToken } from './api.js';
+import { apiClient, refreshAccessToken, setAccessToken } from './api.js';
 import type {
   AuthResponse,
   ForgotPasswordPayload,
@@ -38,16 +38,8 @@ export const authService = {
   },
 
   async refreshToken(): Promise<{ success: boolean; data: { accessToken: string } }> {
-    const res = await apiClient<{ success: boolean; data: { accessToken: string } }>('/auth/refresh', {
-      method: 'POST',
-      requiresAuth: false,
-    });
-
-    if (res.data?.accessToken) {
-      setAccessToken(res.data.accessToken);
-    }
-
-    return res;
+    const accessToken = await refreshAccessToken();
+    return { success: true, data: { accessToken } };
   },
 
   async logout(): Promise<void> {

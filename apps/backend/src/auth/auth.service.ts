@@ -16,6 +16,7 @@ import {
   otp_purpose,
   user_role,
   verification_status,
+  Prisma,
 } from '@prisma/client';
 import * as argon2 from 'argon2';
 import * as crypto from 'node:crypto';
@@ -247,16 +248,16 @@ export class AuthService {
       throw new UnauthorizedException('Sesi tidak ditemukan.');
     }
 
-    // DETEKSI PENGGUNAAN ULANG (REUSE DETECTION):
-    // Jika token yang sudah dicabut/dirotasi dikirim kembali, kemungkinan besar
-    // terjadi pencurian token. Tindakan: Cabut seluruh sesi aktif milik user tersebut!
+    // A revoked token is a replay/reuse attempt. Do not revoke every session
+    // here: an indistinguishable concurrent browser request could otherwise log
+    // the user out globally. The atomic consume below ensures this token can
+    // never create another active session.
     if (session.revoked_at !== null) {
       this.logger.warn(
-        `[SECURITY WARNING] Percobaan penggunaan ulang refresh token terdeteksi untuk user ${session.user_id}! Mencabut seluruh sesi aktif.`,
+        `[SECURITY WARNING] Percobaan penggunaan ulang refresh token terdeteksi untuk user ${session.user_id}.`,
       );
-      await this.revokeAllUserSessions(session.user_id);
       throw new UnauthorizedException(
-        'Peringatan keamanan: Token telah digunakan ulang atau kedaluwarsa. Seluruh sesi aktif dicabut demi keamanan.',
+        'Refresh token telah digunakan atau tidak lagi valid. Silakan gunakan sesi terbaru.',
       );
     }
 
@@ -272,10 +273,6 @@ export class AuthService {
     // Verifikasi hash token
     const isTokenMatch = await argon2.verify(session.refresh_token_hash, rawSecret);
     if (!isTokenMatch) {
-      await this.prisma.auth_sessions.update({
-        where: { id: session.id },
-        data: { revoked_at: new Date() },
-      });
       throw new UnauthorizedException('Kredensial token tidak cocok.');
     }
 
@@ -288,22 +285,37 @@ export class AuthService {
       throw new UnauthorizedException('Akun pengguna telah dinonaktifkan.');
     }
 
-    // ROTASI TOKEN: Cabut token lama, buat token baru
-    await this.prisma.auth_sessions.update({
-      where: { id: session.id },
-      data: {
-        revoked_at: new Date(),
-        last_used_at: new Date(),
-      },
-    });
+    // Atomically consume the old token. The conditional update is the
+    // concurrency boundary: only one request can change revoked_at from null.
+    const newTokens = await this.prisma.$transaction(async (tx) => {
+      const consumed = await tx.auth_sessions.updateMany({
+        where: {
+          id: session.id,
+          revoked_at: null,
+          expires_at: { gt: new Date() },
+        },
+        data: {
+          revoked_at: new Date(),
+          last_used_at: new Date(),
+        },
+      });
 
-    const newTokens = await this.createSession(
-      session.user_id,
-      session.users.email,
-      session.users.role,
-      ipAddress,
-      userAgent,
-    );
+      if (consumed.count !== 1) {
+        this.logger.warn(
+          `[SECURITY WARNING] Refresh token replay rejected for user ${session.user_id}.`,
+        );
+        throw new UnauthorizedException('Refresh token telah digunakan atau tidak lagi valid.');
+      }
+
+      return this.createSession(
+        session.user_id,
+        session.users.email,
+        session.users.role,
+        ipAddress,
+        userAgent,
+        tx,
+      );
+    });
 
     return {
       success: true,
@@ -618,16 +630,7 @@ export class AuthService {
       throw new NotFoundException('Pengguna tidak ditemukan.');
     }
 
-    return {
-      id: user.id,
-      email: user.email,
-      role: user.role,
-      phoneNumber: user.phone_number,
-      isActive: user.is_active,
-      createdAt: user.created_at,
-      studentProfile: user.student_profiles,
-      staffProfile: user.staff_profiles,
-    };
+    return this.toUserResponse(user);
   }
 
   async getUserSessions(userId: string) {
@@ -660,15 +663,12 @@ export class AuthService {
     role: string,
     ipAddress?: string,
     userAgent?: string,
+    prisma: Pick<PrismaService, 'auth_sessions'> = this.prisma,
   ) {
-    const accessSecret = this.configService.get<string>(
-      'JWT_ACCESS_SECRET',
-      'sirasma_dev_access_secret_key_change_in_prod_123',
-    );
+    const accessSecret = this.configService.getOrThrow<string>('JWT_ACCESS_SECRET');
     const accessExpiresIn = this.configService.get<string>('JWT_ACCESS_EXPIRES_IN', '15m');
-    const refreshExpiresIn = this.configService.get<string>('JWT_REFRESH_EXPIRES_IN', '7d');
-
-    // Durasi refresh token dalam milidetik (default 7 hari)
+    // The refresh token is an opaque database token, so its lifetime is
+    // deliberately fixed here and aligned with the HttpOnly cookie lifetime.
     const refreshDurationMs = 7 * 24 * 60 * 60 * 1000;
     const expiresAt = new Date(Date.now() + refreshDurationMs);
 
@@ -677,7 +677,7 @@ export class AuthService {
     const refreshHash = await argon2.hash(rawSecret, { type: argon2.argon2id });
 
     // Simpan ke database
-    const session = await this.prisma.auth_sessions.create({
+    const session = await prisma.auth_sessions.create({
       data: {
         user_id: userId,
         refresh_token_hash: refreshHash,
@@ -709,6 +709,36 @@ export class AuthService {
       refreshToken: compositeRefreshToken,
       sessionId: session.id,
       expiresAt,
+    };
+  }
+
+  private toUserResponse(user: Prisma.usersGetPayload<{
+    include: { student_profiles: true; staff_profiles: true };
+  }>) {
+    return {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      phone: user.phone_number,
+      isActive: user.is_active,
+      createdAt: user.created_at,
+      studentProfile: user.student_profiles
+        ? {
+            id: user.student_profiles.id,
+            nim: user.student_profiles.nim,
+            fullName: user.student_profiles.full_name,
+            studyProgram: user.student_profiles.study_program,
+            admissionYear: user.student_profiles.admission_year,
+            activeSemester: user.student_profiles.active_semester,
+            academicStatus: user.student_profiles.academic_status,
+          }
+        : null,
+      staffProfile: user.staff_profiles
+        ? {
+            id: user.staff_profiles.id,
+            employeeIdentifier: user.staff_profiles.employee_identifier,
+          }
+        : null,
     };
   }
 }

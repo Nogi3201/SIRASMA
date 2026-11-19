@@ -16,7 +16,6 @@ import { MockWhatsAppService } from './services/mock-whatsapp.service.js';
       useFactory: async (configService: ConfigService) => ({
         secret: configService.get<string>(
           'JWT_ACCESS_SECRET',
-          'sirasma_dev_access_secret_key_change_in_prod_123',
         ),
         signOptions: {
           expiresIn: (configService.get<string>('JWT_ACCESS_EXPIRES_IN', '15m') as any),

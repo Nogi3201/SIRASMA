@@ -33,7 +33,8 @@ Aplikasi web untuk manajemen dan reservasi kamar asrama Universitas Logistik dan
 ```bash
 # 1. Salin file environment
 cp .env.example .env
-# Isi nilai DATABASE_URL dan variabel lainnya di .env
+# Isi DATABASE_URL serta JWT_ACCESS_SECRET acak (minimal 32 karakter) di .env.
+# Backend tidak akan mulai tanpa JWT_ACCESS_SECRET yang valid.
 
 # 2. Install semua dependency
 pnpm install

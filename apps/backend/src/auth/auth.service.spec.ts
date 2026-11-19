@@ -267,7 +267,7 @@ describe('AuthService — Unit & Business Rules Test Suite', () => {
       };
 
       prismaMock.auth_sessions.findUnique.mockResolvedValue(session);
-      prismaMock.auth_sessions.update.mockResolvedValue({ ...session, revoked_at: new Date() });
+      prismaMock.auth_sessions.updateMany.mockResolvedValue({ count: 1 });
       prismaMock.auth_sessions.create.mockResolvedValue({
         id: 'sess-new',
         user_id: 'u-10',
@@ -276,16 +276,16 @@ describe('AuthService — Unit & Business Rules Test Suite', () => {
       const res = await authService.refreshTokens(`sess-10.${rawSecret}`);
 
       expect(res.success).toBe(true);
-      expect(prismaMock.auth_sessions.update).toHaveBeenCalledWith(
+      expect(prismaMock.auth_sessions.updateMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { id: 'sess-10' },
+          where: expect.objectContaining({ id: 'sess-10', revoked_at: null }),
           data: expect.objectContaining({ revoked_at: expect.any(Date) }),
         }),
       );
       expect(res.data.refreshToken).toContain('sess-new.');
     });
 
-    it('11. Refresh token yang sudah digunakan ulang (revoked) memicu pencabutan seluruh sesi user', async () => {
+    it('11. Refresh token yang sudah digunakan ulang ditolak tanpa mencabut sesi lain', async () => {
       const session = {
         id: 'sess-revoked',
         user_id: 'u-victim',
@@ -301,13 +301,69 @@ describe('AuthService — Unit & Business Rules Test Suite', () => {
         UnauthorizedException,
       );
 
-      // Pastikan seluruh sesi user langsung dicabut demi keamanan
-      expect(prismaMock.auth_sessions.updateMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: { user_id: 'u-victim', revoked_at: null },
-          data: expect.objectContaining({ revoked_at: expect.any(Date) }),
-        }),
+      expect(prismaMock.auth_sessions.updateMany).not.toHaveBeenCalled();
+    });
+
+    it('refresh paralel hanya mengonsumsi token lama sekali dan sesi baru tetap valid', async () => {
+      const rawSecret = 'parallel_secret_123';
+      const original = {
+        id: 'sess-parallel',
+        user_id: 'u-parallel',
+        refresh_token_hash: await argon2.hash(rawSecret, { type: argon2.argon2id }),
+        revoked_at: null as Date | null,
+        expires_at: new Date(Date.now() + 1000000),
+        users: {
+          id: 'u-parallel',
+          email: 'parallel@ulbi.ac.id',
+          role: user_role.USER,
+          is_active: true,
+          deleted_at: null,
+        },
+      };
+      const sessions = new Map<string, any>([[original.id, original]]);
+      let newSessionNumber = 0;
+
+      prismaMock.auth_sessions.findUnique.mockImplementation(({ where }: any) =>
+        Promise.resolve(sessions.get(where.id) ?? null),
       );
+      prismaMock.auth_sessions.updateMany.mockImplementation(({ where, data }: any) => {
+        const session = sessions.get(where.id);
+        if (!session || session.revoked_at !== null) {
+          return Promise.resolve({ count: 0 });
+        }
+        session.revoked_at = data.revoked_at;
+        session.last_used_at = data.last_used_at;
+        return Promise.resolve({ count: 1 });
+      });
+      prismaMock.auth_sessions.create.mockImplementation(({ data }: any) => {
+        const id = `sess-new-${++newSessionNumber}`;
+        sessions.set(id, {
+          id,
+          ...data,
+          revoked_at: null,
+          users: original.users,
+        });
+        return Promise.resolve({ id, ...data });
+      });
+
+      const concurrent = await Promise.allSettled([
+        authService.refreshTokens(`${original.id}.${rawSecret}`),
+        authService.refreshTokens(`${original.id}.${rawSecret}`),
+      ]);
+      const fulfilled = concurrent.filter(
+        (result): result is PromiseFulfilledResult<any> => result.status === 'fulfilled',
+      );
+
+      expect(fulfilled).toHaveLength(1);
+      expect(prismaMock.auth_sessions.create).toHaveBeenCalledTimes(1);
+
+      await expect(authService.refreshTokens(`${original.id}.${rawSecret}`)).rejects.toThrow(
+        UnauthorizedException,
+      );
+
+      await expect(authService.refreshTokens(fulfilled[0].value.data.refreshToken)).resolves.toMatchObject({
+        success: true,
+      });
     });
 
     it('12. Logout mencabut sesi terkait', async () => {
@@ -352,6 +408,45 @@ describe('AuthService — Unit & Business Rules Test Suite', () => {
         expect.objectContaining({
           where: { user_id: user.id, revoked_at: null },
           data: expect.objectContaining({ revoked_at: expect.any(Date) }),
+        }),
+      );
+    });
+  });
+
+  describe('User profile response contract', () => {
+    it('maps Prisma fields to the public camelCase profile contract', async () => {
+      prismaMock.users.findUnique.mockResolvedValue({
+        id: 'u-profile',
+        email: 'profile@ulbi.ac.id',
+        role: user_role.USER,
+        phone_number: '+6281234567890',
+        is_active: true,
+        created_at: new Date('2026-01-01T00:00:00.000Z'),
+        student_profiles: {
+          id: 'student-profile',
+          nim: '1214001',
+          full_name: 'Mahasiswa ULBI',
+          study_program: 'D4 Teknik Informatika',
+          admission_year: 2024,
+          active_semester: 5,
+          academic_status: academic_status.ACTIVE,
+        },
+        staff_profiles: null,
+      });
+
+      await expect(authService.getUserProfile('u-profile')).resolves.toEqual(
+        expect.objectContaining({
+          phone: '+6281234567890',
+          isActive: true,
+          studentProfile: {
+            id: 'student-profile',
+            nim: '1214001',
+            fullName: 'Mahasiswa ULBI',
+            studyProgram: 'D4 Teknik Informatika',
+            admissionYear: 2024,
+            activeSemester: 5,
+            academicStatus: academic_status.ACTIVE,
+          },
         }),
       );
     });

@@ -1,12 +1,51 @@
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
 
 let currentAccessToken: string | null = null;
+let refreshInFlight: Promise<string> | null = null;
 
 export const setAccessToken = (token: string | null) => {
   currentAccessToken = token;
 };
 
 export const getAccessToken = () => currentAccessToken;
+
+/**
+ * Uses a single shared refresh request for all callers. This prevents React
+ * StrictMode and concurrent 401 responses from rotating one cookie twice.
+ */
+export async function refreshAccessToken(): Promise<string> {
+  if (!refreshInFlight) {
+    refreshInFlight = (async () => {
+      const response = await fetch(`${BASE_URL}/auth/refresh`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!response.ok) {
+        throw new Error('Sesi tidak dapat diperbarui.');
+      }
+
+      const payload = (await response.json()) as { data?: { accessToken?: string } };
+      const accessToken = payload.data?.accessToken;
+      if (!accessToken) {
+        throw new Error('Respons refresh token tidak valid.');
+      }
+
+      setAccessToken(accessToken);
+      return accessToken;
+    })();
+  }
+
+  try {
+    return await refreshInFlight;
+  } catch (error) {
+    setAccessToken(null);
+    throw error;
+  } finally {
+    refreshInFlight = null;
+  }
+}
 
 interface RequestOptions extends RequestInit {
   requiresAuth?: boolean;
@@ -33,30 +72,21 @@ export async function apiClient<T>(endpoint: string, options: RequestOptions = {
   // Handle 401 and attempt automatic token refresh
   if (response.status === 401 && requiresAuth && !endpoint.includes('/auth/refresh') && !endpoint.includes('/auth/login')) {
     try {
-      const refreshRes = await fetch(`${BASE_URL}/auth/refresh`, {
-        method: 'POST',
+      const accessToken = await refreshAccessToken();
+
+      // Retry once with the shared refreshed token; never retry a failed retry.
+      finalHeaders['Authorization'] = `Bearer ${accessToken}`;
+      const retryRes = await fetch(`${BASE_URL}${endpoint}`, {
         credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
+        headers: finalHeaders,
+        ...rest,
       });
 
-      if (refreshRes.ok) {
-        const refreshData = await refreshRes.json();
-        setAccessToken(refreshData.data.accessToken);
-
-        // Retry original request with new token
-        finalHeaders['Authorization'] = `Bearer ${refreshData.data.accessToken}`;
-        const retryRes = await fetch(`${BASE_URL}${endpoint}`, {
-          credentials: 'include',
-          headers: finalHeaders,
-          ...rest,
-        });
-
-        if (!retryRes.ok) {
-          const errorData = await retryRes.json().catch(() => ({}));
-          throw new Error(errorData.message || `Request failed with status ${retryRes.status}`);
-        }
-        return retryRes.json();
+      if (!retryRes.ok) {
+        const errorData = await retryRes.json().catch(() => ({}));
+        throw new Error(errorData.message || `Request failed with status ${retryRes.status}`);
       }
+      return retryRes.json();
     } catch {
       // Refresh failed, clear token
       setAccessToken(null);
