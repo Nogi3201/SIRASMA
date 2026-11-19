@@ -1,0 +1,15 @@
+// This is your Prisma schema file.
+// Schema final akan didefinisikan pada Task 02 setelah desain database disepakati.
+// Docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Model akan ditambahkan pada Task 02.
+

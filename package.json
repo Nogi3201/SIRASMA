@@ -1,0 +1,23 @@
+{
+  "name": "sirasma",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Sistem Informasi Reservasi Asrama ULBI — Monorepo",
+  "scripts": {
+    "dev:frontend": "pnpm -C apps/frontend dev",
+    "dev:backend": "pnpm -C apps/backend start:dev",
+    "dev": "concurrently -n frontend,backend -c cyan,magenta \"pnpm dev:frontend\" \"pnpm dev:backend\"",
+    "build:frontend": "pnpm -C apps/frontend build",
+    "build:backend": "pnpm -C apps/backend build",
+    "build": "pnpm build:frontend && pnpm build:backend",
+    "typecheck:frontend": "pnpm -C apps/frontend typecheck",
+    "typecheck:backend": "pnpm -C apps/backend build"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  }
+}
