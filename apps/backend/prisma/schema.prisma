@@ -1,7 +1,3 @@
-// This is your Prisma schema file.
-// Schema final akan didefinisikan pada Task 02 setelah desain database disepakati.
-// Docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,5 +7,750 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Model akan ditambahkan pada Task 02.
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model academic_periods {
+  id                    String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                  String          @unique @db.VarChar(120)
+  start_date            DateTime        @db.Date
+  end_date              DateTime        @db.Date
+  registration_open_at  DateTime        @db.Timestamptz(6)
+  registration_close_at DateTime        @db.Timestamptz(6)
+  is_active             Boolean         @default(false)
+  created_at            DateTime        @default(now()) @db.Timestamptz(6)
+  updated_at            DateTime        @default(now()) @db.Timestamptz(6)
+  reservations          reservations[]
+  waiting_lists         waiting_lists[]
+}
 
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model academic_verifications {
+  id               String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  student_id       String              @db.Uuid
+  reviewer_id      String?             @db.Uuid
+  status           verification_status @default(PENDING)
+  notes            String?
+  rejection_reason String?
+  reviewed_at      DateTime?           @db.Timestamptz(6)
+  created_at       DateTime            @default(now()) @db.Timestamptz(6)
+  users            users?              @relation(fields: [reviewer_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  student_profiles student_profiles    @relation(fields: [student_id], references: [id], onUpdate: NoAction)
+
+  @@index([student_id, created_at(sort: Desc)], map: "ix_academic_verifications_student")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model audit_logs {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id     String?  @db.Uuid
+  action      String   @db.VarChar(120)
+  entity_type String   @db.VarChar(120)
+  entity_id   String?  @db.Uuid
+  old_values  Json?
+  new_values  Json?
+  result      String?  @db.VarChar(40)
+  ip_address  String?  @db.Inet
+  user_agent  String?
+  created_at  DateTime @default(now()) @db.Timestamptz(6)
+  users       users?   @relation(fields: [user_id], references: [id], onUpdate: NoAction)
+
+  @@index([entity_type, entity_id, created_at(sort: Desc)], map: "ix_audit_entity")
+  @@index([user_id, created_at(sort: Desc)], map: "ix_audit_user_created")
+}
+
+model buildings {
+  id            String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name          String          @unique @db.VarChar(120)
+  gender_policy gender_policy   @default(UNSET)
+  description   String?
+  is_active     Boolean         @default(true)
+  created_at    DateTime        @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime        @default(now()) @db.Timestamptz(6)
+  rooms         rooms[]
+  waiting_lists waiting_lists[]
+}
+
+model check_ins {
+  id               String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  assignment_id    String           @unique @db.Uuid
+  checked_in_at    DateTime         @default(now()) @db.Timestamptz(6)
+  recorded_by      String?          @db.Uuid
+  room_assignments room_assignments @relation(fields: [assignment_id], references: [id], onUpdate: NoAction)
+  users            users?           @relation(fields: [recorded_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model check_out_requests {
+  id                                           String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  assignment_id                                String           @db.Uuid
+  requested_by                                 String           @db.Uuid
+  approved_by                                  String?          @db.Uuid
+  validated_by                                 String?          @db.Uuid
+  status                                       check_out_status @default(REQUESTED)
+  reason                                       String?
+  requested_at                                 DateTime         @default(now()) @db.Timestamptz(6)
+  approved_at                                  DateTime?        @db.Timestamptz(6)
+  actual_departure_at                          DateTime?        @db.Timestamptz(6)
+  validated_at                                 DateTime?        @db.Timestamptz(6)
+  users_check_out_requests_approved_byTousers  users?           @relation("check_out_requests_approved_byTousers", fields: [approved_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  room_assignments                             room_assignments @relation(fields: [assignment_id], references: [id], onUpdate: NoAction)
+  users_check_out_requests_requested_byTousers users            @relation("check_out_requests_requested_byTousers", fields: [requested_by], references: [id], onUpdate: NoAction)
+  users_check_out_requests_validated_byTousers users?           @relation("check_out_requests_validated_byTousers", fields: [validated_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@index([assignment_id, status], map: "ix_checkout_assignment")
+}
+
+model facilities {
+  id              String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name            String            @unique @db.VarChar(120)
+  description     String?
+  created_at      DateTime          @default(now()) @db.Timestamptz(6)
+  room_facilities room_facilities[]
+}
+
+model group_invitations {
+  id                                                                      String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  group_id                                                                String             @db.Uuid
+  invited_student_id                                                      String             @db.Uuid
+  invited_by                                                              String             @db.Uuid
+  status                                                                  invitation_status  @default(PENDING)
+  created_at                                                              DateTime           @default(now()) @db.Timestamptz(6)
+  expires_at                                                              DateTime?          @db.Timestamptz(6)
+  responded_at                                                            DateTime?          @db.Timestamptz(6)
+  reservation_groups                                                      reservation_groups @relation(fields: [group_id], references: [id], onUpdate: NoAction)
+  student_profiles_group_invitations_invited_byTostudent_profiles         student_profiles   @relation("group_invitations_invited_byTostudent_profiles", fields: [invited_by], references: [id], onUpdate: NoAction)
+  student_profiles_group_invitations_invited_student_idTostudent_profiles student_profiles   @relation("group_invitations_invited_student_idTostudent_profiles", fields: [invited_student_id], references: [id], onUpdate: NoAction)
+
+  @@index([invited_student_id, status], map: "ix_group_invitations_student")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model housing_extensions {
+  id              String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  reservation_id  String         @db.Uuid
+  reviewed_by     String?        @db.Uuid
+  requested_start DateTime       @db.Date
+  requested_end   DateTime       @db.Date
+  approved_start  DateTime?      @db.Date
+  approved_end    DateTime?      @db.Date
+  reason          String
+  status          request_status @default(PENDING)
+  requested_at    DateTime       @default(now()) @db.Timestamptz(6)
+  reviewed_at     DateTime?      @db.Timestamptz(6)
+  reservations    reservations   @relation(fields: [reservation_id], references: [id], onUpdate: NoAction)
+  users           users?         @relation(fields: [reviewed_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model invoice_items {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  invoice_id  String   @db.Uuid
+  description String   @db.VarChar(240)
+  quantity    Decimal  @default(1) @db.Decimal(10, 2)
+  unit_amount Decimal  @db.Decimal(14, 2)
+  line_total  Decimal  @db.Decimal(14, 2)
+  invoices    invoices @relation(fields: [invoice_id], references: [id], onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model invoices {
+  id             String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  reservation_id String          @db.Uuid
+  invoice_number String          @unique @db.VarChar(60)
+  amount         Decimal         @db.Decimal(14, 2)
+  currency       String          @default("IDR") @db.Char(3)
+  status         invoice_status  @default(ISSUED)
+  issued_at      DateTime        @default(now()) @db.Timestamptz(6)
+  due_at         DateTime        @db.Timestamptz(6)
+  paid_at        DateTime?       @db.Timestamptz(6)
+  created_at     DateTime        @default(now()) @db.Timestamptz(6)
+  invoice_items  invoice_items[]
+  reservations   reservations    @relation(fields: [reservation_id], references: [id], onUpdate: NoAction)
+  payments       payments[]
+
+  @@index([reservation_id, status], map: "ix_invoices_reservation")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model notification_attempts {
+  id                  String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  notification_id     String         @db.Uuid
+  attempt_number      Int            @db.SmallInt
+  status              attempt_status
+  provider_message_id String?        @db.VarChar(180)
+  error_message       String?
+  attempted_at        DateTime       @default(now()) @db.Timestamptz(6)
+  notifications       notifications  @relation(fields: [notification_id], references: [id], onUpdate: NoAction)
+
+  @@unique([notification_id, attempt_number])
+}
+
+model notifications {
+  id                    String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id               String                  @db.Uuid
+  channel               String                  @default("WHATSAPP") @db.VarChar(30)
+  message               String
+  status                notification_status     @default(QUEUED)
+  created_at            DateTime                @default(now()) @db.Timestamptz(6)
+  sent_at               DateTime?               @db.Timestamptz(6)
+  notification_attempts notification_attempts[]
+  users                 users                   @relation(fields: [user_id], references: [id], onUpdate: NoAction)
+
+  @@index([user_id, created_at(sort: Desc)], map: "ix_notifications_user")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model otp_verifications {
+  id          String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id     String      @db.Uuid
+  purpose     otp_purpose
+  channel     otp_channel
+  destination String      @db.VarChar(254)
+  otp_hash    String
+  expires_at  DateTime    @db.Timestamptz(6)
+  verified_at DateTime?   @db.Timestamptz(6)
+  attempts    Int         @default(0) @db.SmallInt
+  created_at  DateTime    @default(now()) @db.Timestamptz(6)
+  users       users       @relation(fields: [user_id], references: [id], onUpdate: NoAction)
+
+  @@index([user_id, purpose, created_at(sort: Desc)], map: "ix_otp_user_purpose")
+}
+
+model payment_proofs {
+  id               String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  payment_id       String       @db.Uuid
+  file_path        String
+  status           proof_status @default(PENDING)
+  verified_by      String?      @db.Uuid
+  rejection_reason String?
+  uploaded_at      DateTime     @default(now()) @db.Timestamptz(6)
+  reviewed_at      DateTime?    @db.Timestamptz(6)
+  payments         payments     @relation(fields: [payment_id], references: [id], onUpdate: NoAction)
+  users            users?       @relation(fields: [verified_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model payments {
+  id                 String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  invoice_id         String           @db.Uuid
+  method             payment_method
+  status             payment_status   @default(PENDING)
+  amount             Decimal          @db.Decimal(14, 2)
+  provider_name      String?          @db.VarChar(100)
+  provider_reference String?          @db.VarChar(180)
+  idempotency_key    String?          @unique @db.VarChar(120)
+  paid_at            DateTime?        @db.Timestamptz(6)
+  verified_by        String?          @db.Uuid
+  verified_at        DateTime?        @db.Timestamptz(6)
+  failure_reason     String?
+  created_at         DateTime         @default(now()) @db.Timestamptz(6)
+  updated_at         DateTime         @default(now()) @db.Timestamptz(6)
+  payment_proofs     payment_proofs[]
+  invoices           invoices         @relation(fields: [invoice_id], references: [id], onUpdate: NoAction)
+  users              users?           @relation(fields: [verified_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  receipts           receipts?
+  refunds            refunds[]
+
+  @@index([invoice_id, status], map: "ix_payments_invoice")
+}
+
+model receipts {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  payment_id     String   @unique @db.Uuid
+  receipt_number String   @unique @db.VarChar(60)
+  file_path      String
+  issued_at      DateTime @default(now()) @db.Timestamptz(6)
+  payments       payments @relation(fields: [payment_id], references: [id], onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model refunds {
+  id                 String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  payment_id         String        @db.Uuid
+  amount             Decimal       @db.Decimal(14, 2)
+  status             refund_status @default(REQUESTED)
+  provider_reference String?       @db.VarChar(180)
+  reason             String?
+  requested_at       DateTime      @default(now()) @db.Timestamptz(6)
+  completed_at       DateTime?     @db.Timestamptz(6)
+  payments           payments      @relation(fields: [payment_id], references: [id], onUpdate: NoAction)
+
+  @@index([payment_id, status], map: "ix_refunds_payment")
+}
+
+model reservation_group_members {
+  id                 String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  group_id           String              @db.Uuid
+  reservation_id     String              @unique @db.Uuid
+  status             group_member_status @default(INVITED)
+  joined_at          DateTime?           @db.Timestamptz(6)
+  removed_at         DateTime?           @db.Timestamptz(6)
+  reservation_groups reservation_groups  @relation(fields: [group_id], references: [id], onUpdate: NoAction)
+  reservations       reservations        @relation(fields: [reservation_id], references: [id], onUpdate: NoAction)
+
+  @@unique([group_id, reservation_id])
+  @@index([group_id, status], map: "ix_group_members_status")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model reservation_groups {
+  id                        String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  invitation_code           String                      @unique @db.VarChar(32)
+  created_by                String                      @db.Uuid
+  status                    group_status                @default(DRAFT)
+  created_at                DateTime                    @default(now()) @db.Timestamptz(6)
+  submitted_at              DateTime?                   @db.Timestamptz(6)
+  deadline_at               DateTime?                   @db.Timestamptz(6)
+  resolved_at               DateTime?                   @db.Timestamptz(6)
+  group_invitations         group_invitations[]
+  reservation_group_members reservation_group_members[]
+  student_profiles          student_profiles            @relation(fields: [created_by], references: [id], onUpdate: NoAction)
+  waiting_list_entries      waiting_list_entries[]
+}
+
+model reservation_status_histories {
+  id             String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  reservation_id String              @db.Uuid
+  old_status     reservation_status?
+  new_status     reservation_status
+  changed_by     String?             @db.Uuid
+  reason         String?
+  created_at     DateTime            @default(now()) @db.Timestamptz(6)
+  users          users?              @relation(fields: [changed_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  reservations   reservations        @relation(fields: [reservation_id], references: [id], onUpdate: NoAction)
+
+  @@index([reservation_id, created_at], map: "ix_reservation_history")
+}
+
+model reservations {
+  id                           String                         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  student_id                   String                         @db.Uuid
+  academic_period_id           String                         @db.Uuid
+  status                       reservation_status             @default(DRAFT)
+  submitted_at                 DateTime?                      @db.Timestamptz(6)
+  payment_deadline             DateTime?                      @db.Timestamptz(6)
+  cancelled_at                 DateTime?                      @db.Timestamptz(6)
+  cancellation_reason          String?
+  created_at                   DateTime                       @default(now()) @db.Timestamptz(6)
+  updated_at                   DateTime                       @default(now()) @db.Timestamptz(6)
+  housing_extensions           housing_extensions[]
+  invoices                     invoices[]
+  reservation_group_members    reservation_group_members?
+  reservation_status_histories reservation_status_histories[]
+  academic_periods             academic_periods               @relation(fields: [academic_period_id], references: [id], onUpdate: NoAction)
+  student_profiles             student_profiles               @relation(fields: [student_id], references: [id], onUpdate: NoAction)
+  room_assignments             room_assignments[]
+  room_transfer_requests       room_transfer_requests[]
+  waiting_list_entries         waiting_list_entries[]
+
+  @@index([academic_period_id, status], map: "ix_reservations_period_status")
+  @@index([student_id, status], map: "ix_reservations_student_status")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model room_assignments {
+  id                 String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  reservation_id     String               @db.Uuid
+  room_id            String               @db.Uuid
+  start_date         DateTime             @db.Date
+  end_date           DateTime             @db.Date
+  status             assignment_status    @default(RESERVED)
+  assigned_by        String?              @db.Uuid
+  assigned_at        DateTime             @default(now()) @db.Timestamptz(6)
+  check_ins          check_ins?
+  check_out_requests check_out_requests[]
+  users              users?               @relation(fields: [assigned_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  reservations       reservations         @relation(fields: [reservation_id], references: [id], onUpdate: NoAction)
+  rooms              rooms                @relation(fields: [room_id], references: [id], onUpdate: NoAction)
+
+  @@index([reservation_id, status], map: "ix_room_assignments_reservation")
+  @@index([room_id, start_date, end_date], map: "ix_room_assignments_room_dates")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model room_facilities {
+  room_id     String     @db.Uuid
+  facility_id String     @db.Uuid
+  quantity    Int        @default(1) @db.SmallInt
+  notes       String?
+  facilities  facilities @relation(fields: [facility_id], references: [id], onUpdate: NoAction)
+  rooms       rooms      @relation(fields: [room_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([room_id, facility_id])
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This table contains exclusion constraints and requires additional setup for migrations. Visit https://pris.ly/d/exclusion-constraints for more info.
+model room_rates {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  room_id         String    @db.Uuid
+  amount          Decimal   @db.Decimal(14, 2)
+  currency        String    @default("IDR") @db.Char(3)
+  effective_from  DateTime  @db.Date
+  effective_until DateTime? @db.Date
+  created_by      String?   @db.Uuid
+  created_at      DateTime  @default(now()) @db.Timestamptz(6)
+  users           users?    @relation(fields: [created_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  rooms           rooms     @relation(fields: [room_id], references: [id], onUpdate: NoAction)
+}
+
+model room_transfer_requests {
+  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  reservation_id String         @db.Uuid
+  target_room_id String         @db.Uuid
+  reviewed_by    String?        @db.Uuid
+  reason         String
+  status         request_status @default(PENDING)
+  requested_at   DateTime       @default(now()) @db.Timestamptz(6)
+  reviewed_at    DateTime?      @db.Timestamptz(6)
+  reservations   reservations   @relation(fields: [reservation_id], references: [id], onUpdate: NoAction)
+  users          users?         @relation(fields: [reviewed_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  rooms          rooms          @relation(fields: [target_room_id], references: [id], onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model rooms {
+  id                     String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  building_id            String                   @db.Uuid
+  room_number            String                   @db.VarChar(40)
+  capacity               Int                      @db.SmallInt
+  status                 room_status              @default(AVAILABLE)
+  description            String?
+  created_at             DateTime                 @default(now()) @db.Timestamptz(6)
+  updated_at             DateTime                 @default(now()) @db.Timestamptz(6)
+  room_assignments       room_assignments[]
+  room_facilities        room_facilities[]
+  room_rates             room_rates[]
+  room_transfer_requests room_transfer_requests[]
+  buildings              buildings                @relation(fields: [building_id], references: [id], onUpdate: NoAction)
+  waiting_list_offers    waiting_list_offers[]
+
+  @@unique([building_id, room_number])
+  @@index([building_id, status], map: "ix_rooms_building_status")
+}
+
+model staff_profiles {
+  id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id             String   @unique @db.Uuid
+  employee_identifier String?  @unique @db.VarChar(60)
+  created_at          DateTime @default(now()) @db.Timestamptz(6)
+  updated_at          DateTime @default(now()) @db.Timestamptz(6)
+  users               users    @relation(fields: [user_id], references: [id], onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model student_documents {
+  id                                         String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id                                    String          @db.Uuid
+  document_type                              document_type
+  file_path                                  String
+  status                                     document_status @default(PENDING)
+  reviewed_by                                String?         @db.Uuid
+  rejection_reason                           String?
+  uploaded_at                                DateTime        @default(now()) @db.Timestamptz(6)
+  reviewed_at                                DateTime?       @db.Timestamptz(6)
+  users_student_documents_reviewed_byTousers users?          @relation("student_documents_reviewed_byTousers", fields: [reviewed_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  users_student_documents_user_idTousers     users           @relation("student_documents_user_idTousers", fields: [user_id], references: [id], onUpdate: NoAction)
+
+  @@index([user_id, document_type, uploaded_at(sort: Desc)], map: "ix_student_documents_latest")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model student_profiles {
+  id                                                                       String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id                                                                  String                   @unique @db.Uuid
+  nim                                                                      String                   @unique @db.VarChar(30)
+  full_name                                                                String                   @db.VarChar(160)
+  study_program                                                            String                   @db.VarChar(160)
+  admission_year                                                           Int                      @db.SmallInt
+  active_semester                                                          Int                      @db.SmallInt
+  academic_status                                                          academic_status          @default(UNKNOWN)
+  created_at                                                               DateTime                 @default(now()) @db.Timestamptz(6)
+  updated_at                                                               DateTime                 @default(now()) @db.Timestamptz(6)
+  academic_verifications                                                   academic_verifications[]
+  group_invitations_group_invitations_invited_byTostudent_profiles         group_invitations[]      @relation("group_invitations_invited_byTostudent_profiles")
+  group_invitations_group_invitations_invited_student_idTostudent_profiles group_invitations[]      @relation("group_invitations_invited_student_idTostudent_profiles")
+  reservation_groups                                                       reservation_groups[]
+  reservations                                                             reservations[]
+  users                                                                    users                    @relation(fields: [user_id], references: [id], onUpdate: NoAction)
+}
+
+model system_settings {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  setting_key   String   @unique @db.VarChar(120)
+  setting_value Json
+  description   String?
+  updated_by    String?  @db.Uuid
+  updated_at    DateTime @default(now()) @db.Timestamptz(6)
+  users         users?   @relation(fields: [updated_by], references: [id], onDelete: Restrict, onUpdate: NoAction)
+}
+
+model users {
+  id                                                        String                         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email                                                     String                         @unique @db.VarChar(254)
+  phone_number                                              String?                        @db.VarChar(25)
+  phone_verified_at                                         DateTime?                      @db.Timestamptz(6)
+  password_hash                                             String
+  role                                                      user_role                      @default(USER)
+  is_active                                                 Boolean                        @default(true)
+  deleted_at                                                DateTime?                      @db.Timestamptz(6)
+  created_at                                                DateTime                       @default(now()) @db.Timestamptz(6)
+  updated_at                                                DateTime                       @default(now()) @db.Timestamptz(6)
+  academic_verifications                                    academic_verifications[]
+  audit_logs                                                audit_logs[]
+  check_ins                                                 check_ins[]
+  check_out_requests_check_out_requests_approved_byTousers  check_out_requests[]           @relation("check_out_requests_approved_byTousers")
+  check_out_requests_check_out_requests_requested_byTousers check_out_requests[]           @relation("check_out_requests_requested_byTousers")
+  check_out_requests_check_out_requests_validated_byTousers check_out_requests[]           @relation("check_out_requests_validated_byTousers")
+  housing_extensions                                        housing_extensions[]
+  notifications                                             notifications[]
+  otp_verifications                                         otp_verifications[]
+  payment_proofs                                            payment_proofs[]
+  payments                                                  payments[]
+  reservation_status_histories                              reservation_status_histories[]
+  room_assignments                                          room_assignments[]
+  room_rates                                                room_rates[]
+  room_transfer_requests                                    room_transfer_requests[]
+  staff_profiles                                            staff_profiles?
+  student_documents_student_documents_reviewed_byTousers    student_documents[]            @relation("student_documents_reviewed_byTousers")
+  student_documents_student_documents_user_idTousers        student_documents[]            @relation("student_documents_user_idTousers")
+  student_profiles                                          student_profiles?
+  system_settings                                           system_settings[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model waiting_list_entries {
+  id                  String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  waiting_list_id     String                @db.Uuid
+  reservation_id      String?               @db.Uuid
+  group_id            String?               @db.Uuid
+  queue_number        BigInt
+  status              waiting_entry_status  @default(WAITING)
+  registered_at       DateTime              @default(now()) @db.Timestamptz(6)
+  on_hold_at          DateTime?             @db.Timestamptz(6)
+  reservation_groups  reservation_groups?   @relation(fields: [group_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  reservations        reservations?         @relation(fields: [reservation_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  waiting_lists       waiting_lists         @relation(fields: [waiting_list_id], references: [id], onUpdate: NoAction)
+  waiting_list_offers waiting_list_offers[]
+
+  @@unique([waiting_list_id, queue_number])
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model waiting_list_offers {
+  id                   String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  entry_id             String               @db.Uuid
+  room_id              String               @db.Uuid
+  status               offer_status         @default(PENDING)
+  offered_at           DateTime             @default(now()) @db.Timestamptz(6)
+  deadline_at          DateTime             @db.Timestamptz(6)
+  responded_at         DateTime?            @db.Timestamptz(6)
+  waiting_list_entries waiting_list_entries @relation(fields: [entry_id], references: [id], onUpdate: NoAction)
+  rooms                rooms                @relation(fields: [room_id], references: [id], onUpdate: NoAction)
+
+  @@index([entry_id, offered_at(sort: Desc)], map: "ix_waiting_offers_entry")
+}
+
+model waiting_lists {
+  id                   String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  queue_type           waiting_queue_type
+  academic_period_id   String                 @db.Uuid
+  building_id          String?                @db.Uuid
+  created_at           DateTime               @default(now()) @db.Timestamptz(6)
+  waiting_list_entries waiting_list_entries[]
+  academic_periods     academic_periods       @relation(fields: [academic_period_id], references: [id], onUpdate: NoAction)
+  buildings            buildings?             @relation(fields: [building_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@unique([queue_type, academic_period_id, building_id])
+}
+
+enum academic_status {
+  ACTIVE
+  LEAVE
+  INACTIVE
+  GRADUATED
+  UNKNOWN
+}
+
+enum assignment_status {
+  RESERVED
+  OCCUPIED
+  ENDED
+  CANCELLED
+}
+
+enum attempt_status {
+  SUCCESS
+  FAILED
+}
+
+enum check_out_status {
+  REQUESTED
+  APPROVED
+  REJECTED
+  DEPARTED
+  VALIDATED
+  CANCELLED
+}
+
+enum document_status {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum document_type {
+  KTP
+  KTM
+}
+
+enum gender_policy {
+  FEMALE_ONLY
+  MALE_ONLY
+  MIXED
+  UNSET
+}
+
+enum group_member_status {
+  INVITED
+  JOINED
+  READY
+  REMOVED
+  CANCELLED
+}
+
+enum group_status {
+  DRAFT
+  INVITING
+  SUBMITTED
+  PROCESSING
+  COMPLETED
+  CANCELLED
+  EXPIRED
+}
+
+enum invitation_status {
+  PENDING
+  ACCEPTED
+  REJECTED
+  EXPIRED
+  REVOKED
+}
+
+enum invoice_status {
+  ISSUED
+  PARTIALLY_PAID
+  PAID
+  EXPIRED
+  CANCELLED
+}
+
+enum notification_status {
+  QUEUED
+  SENT
+  FAILED
+  CANCELLED
+}
+
+enum offer_status {
+  PENDING
+  ACCEPTED
+  REJECTED
+  EXPIRED
+  CANCELLED
+}
+
+enum otp_channel {
+  WHATSAPP
+  EMAIL
+}
+
+enum otp_purpose {
+  PHONE_VERIFICATION
+  PASSWORD_RESET
+}
+
+enum payment_method {
+  GATEWAY
+  BANK_TRANSFER_MANUAL
+}
+
+enum payment_status {
+  PENDING
+  PROCESSING
+  SUCCEEDED
+  FAILED
+  REJECTED
+  CANCELLED
+}
+
+enum proof_status {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum refund_status {
+  REQUESTED
+  PROCESSING
+  SUCCEEDED
+  FAILED
+  CANCELLED
+}
+
+enum request_status {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum reservation_status {
+  DRAFT
+  SUBMITTED
+  PENDING_ACADEMIC_VERIFICATION
+  PENDING_DOCUMENTS
+  PENDING_PAYMENT
+  WAITING_LIST
+  ALLOCATED
+  CONFIRMED
+  CANCELLED
+  EXPIRED
+  COMPLETED
+}
+
+enum room_status {
+  AVAILABLE
+  OCCUPIED
+  BLOCK_NEW
+  MAINTENANCE
+  INACTIVE
+}
+
+enum user_role {
+  ADMIN
+  STAFF
+  USER
+}
+
+enum verification_status {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum waiting_entry_status {
+  WAITING
+  ON_HOLD
+  OFFERED
+  ACCEPTED
+  REMOVED
+  FULFILLED
+}
+
+enum waiting_queue_type {
+  INDIVIDUAL
+  GROUP
+}
