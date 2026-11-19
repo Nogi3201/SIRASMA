@@ -1,13 +1,66 @@
+import React from 'react';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { AuthProvider, useAuth } from './features/auth/AuthContext.js';
+import { ProtectedRoute } from './features/auth/ProtectedRoute.js';
+import { AdminDashboard, StaffDashboard, StudentDashboard } from './pages/DashboardPages.js';
+import { ForgotPasswordPage } from './pages/ForgotPasswordPage.js';
+import { LoginPage } from './pages/LoginPage.js';
+import { RegisterPage } from './pages/RegisterPage.js';
+import { ResetPasswordPage } from './pages/ResetPasswordPage.js';
+import { UnauthorizedPage } from './pages/UnauthorizedPage.js';
+
+const HomeRedirect: React.FC = () => {
+  const { user, isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white">
+        <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated || !user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (user.role === 'ADMIN') return <Navigate to="/dashboard/admin" replace />;
+  if (user.role === 'STAFF') return <Navigate to="/dashboard/staff" replace />;
+  return <Navigate to="/dashboard/student" replace />;
+};
+
 function App() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="text-center">
-        <h1 className="text-2xl font-semibold text-gray-800">SIRASMA</h1>
-        <p className="mt-2 text-gray-500">Sistem Informasi Reservasi Asrama ULBI</p>
-        <p className="mt-1 text-sm text-gray-400">Frontend ready — Task 01</p>
-      </div>
-    </div>
-  )
+    <BrowserRouter>
+      <AuthProvider>
+        <Routes>
+          {/* Public Authentication Routes */}
+          <Route path="/" element={<HomeRedirect />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/unauthorized" element={<UnauthorizedPage />} />
+
+          {/* Protected Routes by Role */}
+          <Route element={<ProtectedRoute allowedRoles={['USER']} />}>
+            <Route path="/dashboard/student" element={<StudentDashboard />} />
+          </Route>
+
+          <Route element={<ProtectedRoute allowedRoles={['STAFF', 'ADMIN']} />}>
+            <Route path="/dashboard/staff" element={<StaffDashboard />} />
+          </Route>
+
+          <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
+            <Route path="/dashboard/admin" element={<AdminDashboard />} />
+          </Route>
+
+          {/* Fallback */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </AuthProvider>
+    </BrowserRouter>
+  );
 }
 
-export default App
+export default App;

@@ -500,6 +500,7 @@ model users {
   updated_at                                                DateTime                       @default(now()) @db.Timestamptz(6)
   academic_verifications                                    academic_verifications[]
   audit_logs                                                audit_logs[]
+  auth_sessions                                             auth_sessions[]
   check_ins                                                 check_ins[]
   check_out_requests_check_out_requests_approved_byTousers  check_out_requests[]           @relation("check_out_requests_approved_byTousers")
   check_out_requests_check_out_requests_requested_byTousers check_out_requests[]           @relation("check_out_requests_requested_byTousers")
@@ -564,6 +565,23 @@ model waiting_lists {
   buildings            buildings?             @relation(fields: [building_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
 
   @@unique([queue_type, academic_period_id, building_id])
+}
+
+model auth_sessions {
+  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id            String    @db.Uuid
+  refresh_token_hash String
+  user_agent         String?
+  ip_address         String?   @db.Inet
+  expires_at         DateTime  @db.Timestamptz(6)
+  revoked_at         DateTime? @db.Timestamptz(6)
+  last_used_at       DateTime? @db.Timestamptz(6)
+  created_at         DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at         DateTime  @default(now()) @db.Timestamptz(6)
+  users              users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([expires_at, revoked_at], map: "ix_auth_sessions_expires_revoked")
+  @@index([user_id], map: "ix_auth_sessions_user_id")
 }
 
 enum academic_status {
