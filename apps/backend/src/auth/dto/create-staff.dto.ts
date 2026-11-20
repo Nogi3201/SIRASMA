@@ -24,9 +24,6 @@ export class CreateStaffDto {
 
   @IsString()
   @IsOptional()
-  @Matches(/^\+?[1-9]\d{7,14}$/, {
-    message: 'Nomor telepon harus berformat internasional valid',
-  })
   phoneNumber?: string;
 }
 

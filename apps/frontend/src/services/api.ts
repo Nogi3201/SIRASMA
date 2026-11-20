@@ -2,12 +2,41 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api
 
 let currentAccessToken: string | null = null;
 let refreshInFlight: Promise<string> | null = null;
+let csrfToken: string | null = null;
+let csrfTokenExpiresAt = 0;
+let csrfInFlight: Promise<string> | null = null;
 
 export const setAccessToken = (token: string | null) => {
   currentAccessToken = token;
 };
 
 export const getAccessToken = () => currentAccessToken;
+
+async function getCsrfToken(): Promise<string> {
+  if (csrfToken && csrfTokenExpiresAt > Date.now()) return csrfToken;
+
+  if (!csrfInFlight) {
+    csrfInFlight = (async () => {
+      const response = await fetch(`${BASE_URL}/auth/csrf`, { credentials: 'include' });
+      if (!response.ok) throw new Error('Token keamanan tidak dapat dibuat.');
+
+      const payload = (await response.json()) as { data?: { csrfToken?: string } };
+      const token = payload.data?.csrfToken;
+      if (!token) throw new Error('Respons token keamanan tidak valid.');
+
+      csrfToken = token;
+      // The backend token has a 30-minute lifetime; refresh it before expiry.
+      csrfTokenExpiresAt = Date.now() + 25 * 60 * 1000;
+      return token;
+    })();
+  }
+
+  try {
+    return await csrfInFlight;
+  } finally {
+    csrfInFlight = null;
+  }
+}
 
 /**
  * Uses a single shared refresh request for all callers. This prevents React
@@ -16,10 +45,11 @@ export const getAccessToken = () => currentAccessToken;
 export async function refreshAccessToken(): Promise<string> {
   if (!refreshInFlight) {
     refreshInFlight = (async () => {
+      const csrfToken = await getCsrfToken();
       const response = await fetch(`${BASE_URL}/auth/refresh`, {
         method: 'POST',
         credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
       });
 
       if (!response.ok) {
@@ -61,6 +91,10 @@ export async function apiClient<T>(endpoint: string, options: RequestOptions = {
 
   if (requiresAuth && currentAccessToken) {
     finalHeaders['Authorization'] = `Bearer ${currentAccessToken}`;
+  }
+
+  if (endpoint === '/auth/logout' || ['POST', 'PATCH', 'PUT', 'DELETE'].includes((rest.method ?? 'GET').toUpperCase())) {
+    finalHeaders['X-CSRF-Token'] = await getCsrfToken();
   }
 
   const response = await fetch(`${BASE_URL}${endpoint}`, {

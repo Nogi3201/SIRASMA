@@ -27,8 +27,10 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto.js';
 import { LoginDto } from './dto/login.dto.js';
 import { RegisterStudentDto } from './dto/register-student.dto.js';
 import { ResetPasswordDto } from './dto/reset-password.dto.js';
+import { UpdateStudentProfileDto } from './dto/update-student-profile.dto.js';
 import { MockMailService } from './services/mock-mail.service.js';
 import { MockWhatsAppService } from './services/mock-whatsapp.service.js';
+import { normalizePhoneNumber, normalizePhoneNumberForLookup } from './phone-number.js';
 
 @Injectable()
 export class AuthService {
@@ -52,6 +54,7 @@ export class AuthService {
 
     const email = dto.email.toLowerCase().trim();
     const nim = dto.nim.trim();
+    const phoneNumber = normalizePhoneNumber(dto.whatsappNumber);
 
     // Periksa keunikan email
     const existingUser = await this.prisma.users.findUnique({
@@ -88,7 +91,7 @@ export class AuthService {
         const user = await tx.users.create({
           data: {
             email,
-            phone_number: dto.whatsappNumber.trim(),
+            phone_number: phoneNumber,
             password_hash: passwordHash,
             role: user_role.USER,
             is_active: true,
@@ -388,11 +391,13 @@ export class AuthService {
   // 5. PASSWORD RECOVERY (Forgot & Reset)
   // ===========================================================================
   async requestPasswordReset(dto: ForgotPasswordDto) {
-    const identifier = dto.identifier.toLowerCase().trim();
+    const rawIdentifier = dto.identifier.trim();
+    const identifier = rawIdentifier.toLowerCase();
+    const phoneIdentifier = normalizePhoneNumberForLookup(rawIdentifier);
 
     const user = await this.prisma.users.findFirst({
       where: {
-        OR: [{ email: identifier }, { phone_number: identifier }],
+        OR: [{ email: identifier }, { phone_number: phoneIdentifier }],
         deleted_at: null,
         is_active: true,
       },
@@ -448,12 +453,14 @@ export class AuthService {
       throw new BadRequestException('Password baru dan konfirmasi tidak cocok.');
     }
 
-    const identifier = dto.identifier.toLowerCase().trim();
+    const rawIdentifier = dto.identifier.trim();
+    const identifier = rawIdentifier.toLowerCase();
+    const phoneIdentifier = normalizePhoneNumberForLookup(rawIdentifier);
 
     // Cari user
     const user = await this.prisma.users.findFirst({
       where: {
-        OR: [{ email: identifier }, { phone_number: identifier }],
+        OR: [{ email: identifier }, { phone_number: phoneIdentifier }],
         deleted_at: null,
       },
     });
@@ -570,6 +577,7 @@ export class AuthService {
   // ===========================================================================
   async createStaff(dto: CreateStaffDto) {
     const email = dto.email.toLowerCase().trim();
+    const phoneNumber = dto.phoneNumber ? normalizePhoneNumber(dto.phoneNumber) : null;
 
     const existingUser = await this.prisma.users.findUnique({
       where: { email },
@@ -584,7 +592,7 @@ export class AuthService {
       const user = await tx.users.create({
         data: {
           email,
-          phone_number: dto.phoneNumber?.trim() ?? null,
+          phone_number: phoneNumber,
           password_hash: passwordHash,
           role: user_role.STAFF, // Dikunci ke role STAFF
           is_active: true,
@@ -631,6 +639,20 @@ export class AuthService {
     }
 
     return this.toUserResponse(user);
+  }
+
+  async updateStudentProfile(userId: string, dto: UpdateStudentProfileDto) {
+    const profile = await this.prisma.student_profiles.findUnique({ where: { user_id: userId } });
+    if (!profile) throw new NotFoundException('Profil mahasiswa tidak ditemukan.');
+    const updated = await this.prisma.student_profiles.update({
+      where: { user_id: userId },
+      data: {
+        ...(dto.fullName !== undefined && { full_name: dto.fullName.trim() }),
+        ...(dto.studyProgram !== undefined && { study_program: dto.studyProgram.trim() }),
+        ...(dto.activeSemester !== undefined && { active_semester: dto.activeSemester }),
+      },
+    });
+    return { success: true, data: { id: updated.id, nim: updated.nim, fullName: updated.full_name, studyProgram: updated.study_program, activeSemester: updated.active_semester, academicStatus: updated.academic_status } };
   }
 
   async getUserSessions(userId: string) {

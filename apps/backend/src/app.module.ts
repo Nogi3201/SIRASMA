@@ -5,6 +5,9 @@ import { AppService } from './app.service.js';
 import { AuthModule } from './auth/auth.module.js';
 import { HealthModule } from './health/health.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
+import { DashboardModule } from './dashboard/dashboard.module.js';
+import { ManagementModule } from './management/management.module.js';
+import { ReservationsModule } from './reservations/reservations.module.js';
 import { validateEnvironment } from './config/environment.validation.js';
 
 @Module({
@@ -15,6 +18,9 @@ import { validateEnvironment } from './config/environment.validation.js';
       validate: validateEnvironment,
     }),
     PrismaModule,
+    DashboardModule,
+    ManagementModule,
+    ReservationsModule,
     AuthModule,
     HealthModule,
   ],

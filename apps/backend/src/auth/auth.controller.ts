@@ -6,16 +6,19 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  Patch,
   Post,
   Req,
   Res,
   UseGuards,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { user_role } from '@prisma/client';
 import type { Request, Response } from 'express';
 import { AuthService } from './auth.service.js';
 import type { AuthenticatedUser } from './decorators/current-user.decorator.js';
 import { CurrentUser } from './decorators/current-user.decorator.js';
+import { RateLimit } from './decorators/rate-limit.decorator.js';
 import { Roles } from './decorators/roles.decorator.js';
 import { ChangePasswordDto } from './dto/change-password.dto.js';
 import { CreateStaffDto } from './dto/create-staff.dto.js';
@@ -23,17 +26,27 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto.js';
 import { LoginDto } from './dto/login.dto.js';
 import { RegisterStudentDto } from './dto/register-student.dto.js';
 import { ResetPasswordDto } from './dto/reset-password.dto.js';
+import { UpdateStudentProfileDto } from './dto/update-student-profile.dto.js';
 import { JwtAuthGuard } from './guards/jwt-auth.guard.js';
 import { RolesGuard } from './guards/roles.guard.js';
+import { AuthRateLimitGuard } from './guards/auth-rate-limit.guard.js';
+import { CsrfGuard } from './guards/csrf.guard.js';
+import { getRefreshCookieOptions } from '../config/security.config.js';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly csrfGuard: CsrfGuard,
+    private readonly configService: ConfigService,
+  ) {}
 
   // ===========================================================================
   // 1. REGISTRASI MAHASISWA
   // ===========================================================================
   @Post('register')
+  @UseGuards(AuthRateLimitGuard)
+  @RateLimit({ limit: 5, ttlMs: 60 * 60 * 1000 })
   @HttpCode(HttpStatus.CREATED)
   async register(@Body() dto: RegisterStudentDto) {
     return this.authService.registerStudent(dto);
@@ -43,6 +56,8 @@ export class AuthController {
   // 2. LOGIN
   // ===========================================================================
   @Post('login')
+  @UseGuards(AuthRateLimitGuard)
+  @RateLimit({ limit: 10, ttlMs: 15 * 60 * 1000 })
   @HttpCode(HttpStatus.OK)
   async login(
     @Body() dto: LoginDto,
@@ -70,7 +85,16 @@ export class AuthController {
   // ===========================================================================
   // 3. REFRESH TOKEN
   // ===========================================================================
+  @Get('csrf')
+  @UseGuards(AuthRateLimitGuard)
+  @RateLimit({ limit: 60, ttlMs: 60 * 1000 })
+  getCsrfToken() {
+    return { success: true, data: { csrfToken: this.csrfGuard.createToken() } };
+  }
+
   @Post('refresh')
+  @UseGuards(CsrfGuard, AuthRateLimitGuard)
+  @RateLimit({ limit: 30, ttlMs: 60 * 1000 })
   @HttpCode(HttpStatus.OK)
   async refresh(
     @Req() req: Request,
@@ -100,6 +124,8 @@ export class AuthController {
   // 4. LOGOUT
   // ===========================================================================
   @Post('logout')
+  @UseGuards(CsrfGuard, AuthRateLimitGuard)
+  @RateLimit({ limit: 30, ttlMs: 60 * 1000 })
   @HttpCode(HttpStatus.OK)
   async logout(
     @Req() req: Request,
@@ -112,12 +138,7 @@ export class AuthController {
     await this.authService.logout(tokenToUse);
 
     // Bersihkan cookie
-    res.clearCookie('refresh_token', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/api/auth',
-    });
+    this.clearRefreshTokenCookie(res);
 
     return {
       success: true,
@@ -129,12 +150,16 @@ export class AuthController {
   // 5. PASSWORD RECOVERY
   // ===========================================================================
   @Post('forgot-password')
+  @UseGuards(AuthRateLimitGuard)
+  @RateLimit({ limit: 3, ttlMs: 15 * 60 * 1000 })
   @HttpCode(HttpStatus.OK)
   async forgotPassword(@Body() dto: ForgotPasswordDto) {
     return this.authService.requestPasswordReset(dto);
   }
 
   @Post('reset-password')
+  @UseGuards(AuthRateLimitGuard)
+  @RateLimit({ limit: 5, ttlMs: 15 * 60 * 1000 })
   @HttpCode(HttpStatus.OK)
   async resetPassword(@Body() dto: ResetPasswordDto) {
     return this.authService.resetPassword(dto);
@@ -153,8 +178,16 @@ export class AuthController {
     };
   }
 
+  @Patch('profile/student')
+  @UseGuards(JwtAuthGuard, RolesGuard, CsrfGuard)
+  @Roles(user_role.USER)
+  async updateStudentProfile(@CurrentUser('sub') userId: string, @Body() dto: UpdateStudentProfileDto) {
+    return this.authService.updateStudentProfile(userId, dto);
+  }
+
   @Post('change-password')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AuthRateLimitGuard)
+  @RateLimit({ limit: 5, ttlMs: 15 * 60 * 1000 })
   @HttpCode(HttpStatus.OK)
   async changePassword(
     @CurrentUser('sub') userId: string,
@@ -162,7 +195,7 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ) {
     const result = await this.authService.changePassword(userId, dto);
-    res.clearCookie('refresh_token', { path: '/api/auth' });
+    this.clearRefreshTokenCookie(res);
     return result;
   }
 
@@ -189,7 +222,7 @@ export class AuthController {
   // 7. ADMIN MANAGEMENT: CREATE STAFF
   // ===========================================================================
   @Post('admin/staff')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, CsrfGuard)
   @Roles(user_role.ADMIN)
   @HttpCode(HttpStatus.CREATED)
   async createStaff(@Body() dto: CreateStaffDto) {
@@ -236,13 +269,11 @@ export class AuthController {
   // HELPER: Cookie Configuration
   // ===========================================================================
   private setRefreshTokenCookie(res: Response, token: string) {
-    const isProduction = process.env.NODE_ENV === 'production';
-    res.cookie('refresh_token', token, {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: 'lax',
-      path: '/api/auth',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 hari
-    });
+    res.cookie('refresh_token', token, getRefreshCookieOptions(this.configService));
+  }
+
+  private clearRefreshTokenCookie(res: Response) {
+    const { maxAge: _maxAge, ...options } = getRefreshCookieOptions(this.configService);
+    res.clearCookie('refresh_token', options);
   }
 }

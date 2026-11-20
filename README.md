@@ -33,8 +33,9 @@ Aplikasi web untuk manajemen dan reservasi kamar asrama Universitas Logistik dan
 ```bash
 # 1. Salin file environment
 cp .env.example .env
-# Isi DATABASE_URL serta JWT_ACCESS_SECRET acak (minimal 32 karakter) di .env.
-# Backend tidak akan mulai tanpa JWT_ACCESS_SECRET yang valid.
+# Isi DATABASE_URL, JWT_ACCESS_SECRET, dan CSRF_SECRET acak (masing-masing
+# minimal 32 karakter) di .env. Atur FRONTEND_ORIGINS untuk domain browser.
+# Backend tidak akan mulai tanpa secret yang valid.
 
 # 2. Install semua dependency
 pnpm install
@@ -84,4 +85,11 @@ Lihat folder [`docs/`](./docs/) untuk detail arsitektur, desain database, dan ko
 ## Status
 
 > 🏗️ Task 01 — Fondasi Monorepo (selesai)
+
+## Catatan keamanan autentikasi
+
+- Rate limiting auth saat ini bersifat in-memory per instance. Deployment
+  multi-instance perlu shared store seperti Redis agar limit berlaku global.
+- Refresh/logout membutuhkan Origin yang diizinkan dan header CSRF token dari
+  `GET /api/auth/csrf`. Refresh cookie tetap HttpOnly dan tidak dibaca JavaScript.
 

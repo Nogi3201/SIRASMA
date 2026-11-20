@@ -52,9 +52,6 @@ export class RegisterStudentDto {
 
   @IsString()
   @IsNotEmpty()
-  @Matches(/^\+?[1-9]\d{7,14}$/, {
-    message: 'Nomor WhatsApp harus berformat internasional valid (contoh: +6281234567890)',
-  })
   whatsappNumber: string;
 }
 

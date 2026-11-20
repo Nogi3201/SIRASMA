@@ -5,6 +5,8 @@ import { AuthController } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
 import { JwtAuthGuard } from './guards/jwt-auth.guard.js';
 import { RolesGuard } from './guards/roles.guard.js';
+import { AuthRateLimitGuard } from './guards/auth-rate-limit.guard.js';
+import { CsrfGuard } from './guards/csrf.guard.js';
 import { MockMailService } from './services/mock-mail.service.js';
 import { MockWhatsAppService } from './services/mock-whatsapp.service.js';
 
@@ -25,7 +27,15 @@ import { MockWhatsAppService } from './services/mock-whatsapp.service.js';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, MockMailService, MockWhatsAppService, JwtAuthGuard, RolesGuard],
-  exports: [AuthService, JwtAuthGuard, RolesGuard, JwtModule],
+  providers: [
+    AuthService,
+    MockMailService,
+    MockWhatsAppService,
+    JwtAuthGuard,
+    RolesGuard,
+    AuthRateLimitGuard,
+    CsrfGuard,
+  ],
+  exports: [AuthService, JwtAuthGuard, RolesGuard, CsrfGuard, JwtModule],
 })
 export class AuthModule {}

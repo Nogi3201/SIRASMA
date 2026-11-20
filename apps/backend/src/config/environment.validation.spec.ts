@@ -12,8 +12,14 @@ describe('validateEnvironment', () => {
     );
   });
 
+  it('rejects a missing CSRF secret after JWT validation succeeds', () => {
+    expect(() => validateEnvironment({ JWT_ACCESS_SECRET: 'a'.repeat(32) })).toThrow(
+      'CSRF_SECRET wajib diatur',
+    );
+  });
+
   it('accepts a JWT access secret with the required minimum length', () => {
-    const config = { JWT_ACCESS_SECRET: 'a'.repeat(32) };
+    const config = { JWT_ACCESS_SECRET: 'a'.repeat(32), CSRF_SECRET: 'b'.repeat(32) };
     expect(validateEnvironment(config)).toBe(config);
   });
 });

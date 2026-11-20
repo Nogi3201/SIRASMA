@@ -1,17 +1,26 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { ConfigService } from '@nestjs/config';
 import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module.js';
+import { getAllowedOrigins } from './config/security.config.js';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  const configService = app.get(ConfigService);
 
   // Parse cookies (HttpOnly refresh token)
   app.use(cookieParser());
 
   // Enable CORS with credentials
   app.enableCors({
-    origin: ['http://localhost:5173', 'http://127.0.0.1:5173'],
+    origin: (origin: string | undefined, callback: (error: Error | null, allow?: boolean) => void) => {
+      if (!origin || getAllowedOrigins(configService).includes(origin)) {
+        callback(null, true);
+        return;
+      }
+      callback(new Error('Origin tidak diizinkan oleh kebijakan CORS.'));
+    },
     credentials: true,
   });
 

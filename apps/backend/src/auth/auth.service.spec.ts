@@ -452,6 +452,20 @@ describe('AuthService — Unit & Business Rules Test Suite', () => {
     });
   });
 
+  describe('Session ownership', () => {
+    it('does not allow a user to revoke another user session', async () => {
+      prismaMock.auth_sessions.findUnique.mockResolvedValue({
+        id: 'session-owned-by-b',
+        user_id: 'user-b',
+      });
+
+      await expect(authService.revokeSession('user-a', 'session-owned-by-b')).rejects.toThrow(
+        'Sesi tidak ditemukan atau Anda tidak memiliki akses',
+      );
+      expect(prismaMock.auth_sessions.update).not.toHaveBeenCalled();
+    });
+  });
+
   // ===========================================================================
   // ADMIN ONLY: CREATE STAFF
   // ===========================================================================

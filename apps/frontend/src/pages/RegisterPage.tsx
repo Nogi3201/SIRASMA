@@ -53,7 +53,7 @@ export const RegisterPage: React.FC = () => {
       return;
     }
 
-    if (!/^\+?[1-9]\d{7,14}$/.test(form.whatsappNumber)) {
+    if (!/^\+[1-9]\d{7,14}$/.test(form.whatsappNumber.replace(/[\s().-]/g, ''))) {
       setError('Format nomor WhatsApp tidak valid. Gunakan format internasional (contoh: +6281234567890).');
       return;
     }

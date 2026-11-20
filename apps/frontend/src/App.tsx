@@ -1,6 +1,5 @@
-import React from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
-import { AuthProvider, useAuth } from './features/auth/AuthContext.js';
+import { AuthProvider } from './features/auth/AuthContext.js';
 import { ProtectedRoute } from './features/auth/ProtectedRoute.js';
 import { AdminDashboard, StaffDashboard, StudentDashboard } from './pages/DashboardPages.js';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage.js';
@@ -8,26 +7,7 @@ import { LoginPage } from './pages/LoginPage.js';
 import { RegisterPage } from './pages/RegisterPage.js';
 import { ResetPasswordPage } from './pages/ResetPasswordPage.js';
 import { UnauthorizedPage } from './pages/UnauthorizedPage.js';
-
-const HomeRedirect: React.FC = () => {
-  const { user, isAuthenticated, isLoading } = useAuth();
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white">
-        <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated || !user) {
-    return <Navigate to="/login" replace />;
-  }
-
-  if (user.role === 'ADMIN') return <Navigate to="/dashboard/admin" replace />;
-  if (user.role === 'STAFF') return <Navigate to="/dashboard/staff" replace />;
-  return <Navigate to="/dashboard/student" replace />;
-};
+import { LandingPage } from './pages/LandingPage.js';
 
 function App() {
   return (
@@ -35,7 +15,7 @@ function App() {
       <AuthProvider>
         <Routes>
           {/* Public Authentication Routes */}
-          <Route path="/" element={<HomeRedirect />} />
+          <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
