@@ -45,3 +45,10 @@ body { font-family: var(--font-sans); background: var(--color-canvas); color: va
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
 }
+
+@keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+@keyframes drift { from { transform: translateX(-6%); } to { transform: translateX(6%); } }
+@keyframes shine { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+.animate-float { animation: float 6s ease-in-out infinite; }
+.animate-drift { animation: drift 18s ease-in-out infinite alternate; }
+.text-shine { background: linear-gradient(90deg,#fff 0%,#ffd9c6 40%,#fff 80%); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: shine 6s linear infinite; }

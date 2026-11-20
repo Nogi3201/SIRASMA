@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Bell, ChevronLeft, LogOut, Menu, X } from 'lucide-react';
 import { useAuth } from '../features/auth/AuthContext.js';
 import { cx } from '../components/ui.js';
+import { LogoMark } from '../components/Logo.js';
 
 export type ShellNavItem = { id: string; label: string; icon: React.ElementType; onClick?: () => void };
 
@@ -44,7 +45,7 @@ export const AppShell: React.FC<AppShellProps> = ({ roleLabel, title, nav, child
     <aside className="flex h-full flex-col border-r border-line bg-white">
       <div className="flex h-18 items-center justify-between px-5">
         <div className={cx('flex items-center gap-2.5', compact && 'justify-center')}>
-          <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-brand-700 text-sm font-extrabold text-white">S</span>
+          <LogoMark className="size-9 shrink-0" />
           {!compact && <div><p className="font-extrabold leading-none tracking-tight text-brand-700">SIRASMA</p><p className="mt-1 text-[10px] font-bold uppercase tracking-[.14em] text-accent-500">{roleLabel}</p></div>}
         </div>
         <button type="button" onClick={() => setOpen(false)} className="rounded-lg p-2 text-muted hover:bg-canvas lg:hidden" aria-label="Tutup menu"><X className="size-4" /></button>

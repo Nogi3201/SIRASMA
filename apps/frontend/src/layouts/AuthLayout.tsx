@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Building2, CalendarCheck, ClipboardCheck, ShieldCheck } from 'lucide-react';
+import { LogoMark } from '../components/Logo.js';
+import { CalendarCheck, ClipboardCheck, ShieldCheck } from 'lucide-react';
 
 interface AuthLayoutProps {
   children: React.ReactNode;
@@ -19,7 +20,7 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children, title, subtitl
     <aside className="relative hidden overflow-hidden bg-gradient-to-br from-brand-700 via-brand-800 to-brand-900 p-12 text-white lg:flex lg:flex-col lg:justify-between">
       <div className="pointer-events-none absolute -right-24 top-1/3 size-80 rounded-full bg-accent-500/25 blur-3xl" />
       <Link to="/" className="relative flex items-center gap-3">
-        <span className="grid size-11 place-items-center rounded-xl bg-white/15 ring-1 ring-white/20"><Building2 className="size-6" /></span>
+        <LogoMark className="size-11" />
         <span className="text-2xl font-extrabold tracking-tight">SIRASMA</span>
       </Link>
       <div className="relative">
@@ -36,7 +37,7 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children, title, subtitl
     <div className="flex flex-col justify-center px-4 py-10 sm:px-10">
       <div className="mx-auto w-full max-w-xl">
         <Link to="/" className="mb-8 flex items-center gap-2.5 lg:hidden">
-          <span className="grid size-10 place-items-center rounded-xl bg-brand-700 text-white"><Building2 className="size-5" /></span>
+          <LogoMark className="size-10" />
           <span className="text-xl font-extrabold tracking-tight text-brand-700">SIRASMA</span>
         </Link>
         <div className="animate-fade-up">
