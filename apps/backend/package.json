@@ -9,6 +9,7 @@
   "scripts": {
     "build": "nest build",
     "bootstrap:admin": "node --env-file=../../.env ./scripts/bootstrap-admin.mjs",
+    "seed:demo": "node --env-file=../../.env ./prisma/seed-demo.mjs",
     "deploy": "nest deploy",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",

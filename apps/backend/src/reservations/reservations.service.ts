@@ -15,7 +15,7 @@ const transitions: Partial<Record<reservation_status, reservation_status[]>> = {
 @Injectable()
 export class ReservationsService {
  constructor(private readonly prisma: PrismaService) {}
- private readonly include = { student_profiles: { select: { full_name: true, nim: true, user_id: true } }, academic_periods: { select: { name: true, start_date: true, end_date: true } }, room_assignments: { include: { rooms: { include: { buildings: true } } } }, reservation_status_histories: { orderBy: { created_at: 'asc' as const } } };
+ private readonly include = { student_profiles: { select: { full_name: true, nim: true, user_id: true } }, academic_periods: { select: { name: true, start_date: true, end_date: true } }, room_assignments: { include: { rooms: { include: { buildings: true } } } }, reservation_status_histories: { orderBy: { created_at: 'asc' as const }, include: { users: { select: { role: true } } } } };
  async mine(userId: string) { const profile = await this.profile(userId); return this.prisma.reservations.findMany({ where: { student_id: profile.id }, orderBy: { created_at: 'desc' }, include: this.include }); }
  async list() { return this.prisma.reservations.findMany({ orderBy: { created_at: 'desc' }, include: this.include }); }
  async one(id: string, userId: string, role: string) { const reservation = await this.prisma.reservations.findUnique({ where: { id }, include: this.include }); if (!reservation) throw new NotFoundException('Reservasi tidak ditemukan.'); if (role === user_role.USER && reservation.student_profiles.user_id !== userId) throw new ForbiddenException('Anda tidak dapat melihat reservasi ini.'); return reservation; }

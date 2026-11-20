@@ -1,5 +1,5 @@
 import { apiClient } from './api.js';
-export type Reservation = { id: string; status: string; created_at: string; submitted_at?: string | null; student_profiles?: { full_name: string; nim: string }; academic_periods?: { name: string }; room_assignments?: { rooms: { room_number: string; buildings: { name: string } } }[]; reservation_status_histories?: { new_status: string; reason?: string | null; created_at: string }[] };
+export type Reservation = { id: string; status: string; created_at: string; submitted_at?: string | null; student_profiles?: { full_name: string; nim: string }; academic_periods?: { name: string }; room_assignments?: { rooms: { room_number: string; buildings: { name: string } } }[]; reservation_status_histories?: { new_status: string; reason?: string | null; created_at: string; users?: { role: string } | null }[] };
 export const reservationsService = {
   mine: () => apiClient<Reservation[]>('/reservations/mine'),
   all: () => apiClient<Reservation[]>('/reservations'),
