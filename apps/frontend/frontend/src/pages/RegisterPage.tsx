@@ -85,7 +85,7 @@ export const RegisterPage: React.FC = () => {
           <div className="mt-8">
             <Link
               to="/login"
-              className="inline-flex items-center justify-center px-6 py-2.5 rounded-lg text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 shadow-md transition-colors"
+              className="inline-flex items-center justify-center px-6 py-2.5 rounded-xl text-sm font-semibold text-white bg-brand-700 hover:bg-brand-800 shadow-md transition-colors"
             >
               Lanjut ke Halaman Login
             </Link>
@@ -167,7 +167,7 @@ export const RegisterPage: React.FC = () => {
             name="studyProgram"
             value={form.studyProgram}
             onChange={handleChange}
-            className="block w-full rounded-lg border border-slate-300 text-sm px-3.5 py-2.5 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-600 bg-white"
+            className="block w-full rounded-xl border border-slate-300 text-sm px-3.5 py-2.5 text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-100 focus:border-brand-700 bg-white"
           >
             <option value="D4 Teknik Informatika">D4 Teknik Informatika</option>
             <option value="D3 Manajemen Logistik">D3 Manajemen Logistik</option>
@@ -213,15 +213,15 @@ export const RegisterPage: React.FC = () => {
         />
 
         <div className="pt-2">
-          <div className="flex items-center text-xs text-slate-500 mb-4 bg-slate-50 p-3 rounded-lg border border-slate-200">
-            <ShieldCheck className="w-5 h-5 text-indigo-600 mr-2 flex-shrink-0" />
+          <div className="flex items-center text-xs text-slate-500 mb-4 bg-slate-50 p-3 rounded-xl border border-slate-200">
+            <ShieldCheck className="w-5 h-5 text-brand-700 mr-2 flex-shrink-0" />
             <span>Role mahasiswa ditetapkan otomatis oleh sistem. Status verifikasi akademik akan dimulai dari status PENDING.</span>
           </div>
 
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full flex items-center justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-60 transition-all cursor-pointer"
+            className="w-full flex items-center justify-center py-2.5 px-4 border border-transparent rounded-xl shadow-sm text-sm font-semibold text-white bg-brand-700 hover:bg-brand-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 disabled:opacity-60 transition-all cursor-pointer"
           >
             {isSubmitting ? (
               <>
@@ -238,7 +238,7 @@ export const RegisterPage: React.FC = () => {
       <div className="mt-6 pt-6 border-t border-slate-100 text-center">
         <p className="text-sm text-slate-600">
           Sudah memiliki akun?{' '}
-          <Link to="/login" className="font-semibold text-indigo-600 hover:text-indigo-500">
+          <Link to="/login" className="font-semibold text-brand-700 hover:text-brand-500">
             Masuk di sini
           </Link>
         </p>

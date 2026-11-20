@@ -69,7 +69,7 @@ export const LoginPage: React.FC = () => {
           <div className="flex justify-end mt-1.5">
             <Link
               to="/forgot-password"
-              className="text-xs font-semibold text-indigo-600 hover:text-indigo-500 transition-colors"
+              className="text-xs font-semibold text-brand-700 hover:text-brand-500 transition-colors"
             >
               Lupa password?
             </Link>
@@ -79,7 +79,7 @@ export const LoginPage: React.FC = () => {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full flex items-center justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-60 transition-all cursor-pointer"
+          className="w-full flex items-center justify-center py-2.5 px-4 border border-transparent rounded-xl shadow-sm text-sm font-semibold text-white bg-brand-700 hover:bg-brand-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 disabled:opacity-60 transition-all cursor-pointer"
         >
           {isSubmitting ? (
             <>
@@ -98,7 +98,7 @@ export const LoginPage: React.FC = () => {
       <div className="mt-6 pt-6 border-t border-slate-100 text-center">
         <p className="text-sm text-slate-600">
           Mahasiswa baru belum memiliki akun?{' '}
-          <Link to="/register" className="font-semibold text-indigo-600 hover:text-indigo-500">
+          <Link to="/register" className="font-semibold text-brand-700 hover:text-brand-500">
             Daftar di sini
           </Link>
         </p>

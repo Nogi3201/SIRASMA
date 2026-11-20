@@ -52,7 +52,7 @@ export const ForgotPasswordPage: React.FC = () => {
           <div className="mt-6 flex flex-col space-y-3">
             <Link
               to="/reset-password"
-              className="w-full flex items-center justify-center py-2.5 px-4 rounded-lg text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm"
+              className="w-full flex items-center justify-center py-2.5 px-4 rounded-xl text-sm font-semibold text-white bg-brand-700 hover:bg-brand-800 shadow-sm"
             >
               Masukkan Kode OTP
             </Link>
@@ -83,9 +83,9 @@ export const ForgotPasswordPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setChannel('EMAIL')}
-                className={`flex items-center justify-center py-2.5 px-3 rounded-lg border text-sm font-medium transition-all ${
+                className={`flex items-center justify-center py-2.5 px-3 rounded-xl border text-sm font-medium transition-all ${
                   channel === 'EMAIL'
-                    ? 'border-indigo-600 bg-indigo-50/70 text-indigo-700 ring-2 ring-indigo-200'
+                    ? 'border-brand-700 bg-brand-50/70 text-brand-800 ring-2 ring-brand-200'
                     : 'border-slate-200 hover:bg-slate-50 text-slate-600'
                 }`}
               >
@@ -95,9 +95,9 @@ export const ForgotPasswordPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setChannel('WHATSAPP')}
-                className={`flex items-center justify-center py-2.5 px-3 rounded-lg border text-sm font-medium transition-all ${
+                className={`flex items-center justify-center py-2.5 px-3 rounded-xl border text-sm font-medium transition-all ${
                   channel === 'WHATSAPP'
-                    ? 'border-indigo-600 bg-indigo-50/70 text-indigo-700 ring-2 ring-indigo-200'
+                    ? 'border-brand-700 bg-brand-50/70 text-brand-800 ring-2 ring-brand-200'
                     : 'border-slate-200 hover:bg-slate-50 text-slate-600'
                 }`}
               >
@@ -110,7 +110,7 @@ export const ForgotPasswordPage: React.FC = () => {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full flex items-center justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-60 transition-all cursor-pointer"
+            className="w-full flex items-center justify-center py-2.5 px-4 border border-transparent rounded-xl shadow-sm text-sm font-semibold text-white bg-brand-700 hover:bg-brand-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 disabled:opacity-60 transition-all cursor-pointer"
           >
             {isSubmitting ? (
               <>
@@ -125,7 +125,7 @@ export const ForgotPasswordPage: React.FC = () => {
           <div className="pt-2 text-center">
             <Link
               to="/login"
-              className="inline-flex items-center text-xs font-semibold text-slate-600 hover:text-indigo-600"
+              className="inline-flex items-center text-xs font-semibold text-slate-600 hover:text-brand-700"
             >
               <ArrowLeft className="w-3.5 h-3.5 mr-1.5" />
               Kembali ke Login

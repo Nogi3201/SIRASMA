@@ -85,7 +85,7 @@ export const ResetPasswordPage: React.FC = () => {
           <div className="mt-6">
             <Link
               to="/login"
-              className="inline-flex items-center justify-center px-6 py-2.5 rounded-lg text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700"
+              className="inline-flex items-center justify-center px-6 py-2.5 rounded-xl text-sm font-semibold text-white bg-brand-700 hover:bg-brand-800"
             >
               Masuk Sekarang
             </Link>
@@ -137,7 +137,7 @@ export const ResetPasswordPage: React.FC = () => {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full mt-2 flex items-center justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-60 transition-all cursor-pointer"
+            className="w-full mt-2 flex items-center justify-center py-2.5 px-4 border border-transparent rounded-xl shadow-sm text-sm font-semibold text-white bg-brand-700 hover:bg-brand-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 disabled:opacity-60 transition-all cursor-pointer"
           >
             {isSubmitting ? (
               <>
@@ -153,7 +153,7 @@ export const ResetPasswordPage: React.FC = () => {
           </button>
 
           <div className="pt-2 text-center">
-            <Link to="/login" className="text-xs font-semibold text-slate-600 hover:text-indigo-600">
+            <Link to="/login" className="text-xs font-semibold text-slate-600 hover:text-brand-700">
               Batal dan Kembali ke Login
             </Link>
           </div>

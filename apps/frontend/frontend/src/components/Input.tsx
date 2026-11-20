@@ -20,15 +20,15 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         <label htmlFor={inputId} className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1.5">
           {label}
         </label>
-        <div className="relative rounded-lg shadow-sm">
+        <div className="relative rounded-xl shadow-sm">
           <input
             id={inputId}
             ref={ref}
             type={inputType}
-            className={`block w-full rounded-lg border text-sm px-3.5 py-2.5 transition-colors focus:outline-none focus:ring-2 ${
+            className={`block w-full rounded-xl border text-sm px-3.5 py-2.5 transition-colors focus:outline-none focus:ring-2 ${
               error
                 ? 'border-red-300 text-red-900 placeholder-red-300 focus:border-red-500 focus:ring-red-200'
-                : 'border-slate-300 text-slate-900 placeholder-slate-400 focus:border-indigo-600 focus:ring-indigo-100'
+                : 'border-line text-ink placeholder-slate-400 focus:border-brand-700 focus:ring-brand-100'
             }`}
             {...props}
           />

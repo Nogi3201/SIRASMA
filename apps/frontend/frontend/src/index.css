@@ -1,0 +1,47 @@
+@import "tailwindcss";
+
+/* ───────── SIRASMA Design System ─────────
+   Primary: Blue · Secondary: Light Gray & White · Accent: Orange */
+@theme {
+  --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --color-brand-50: #eef3fc;
+  --color-brand-100: #dbe5f8;
+  --color-brand-200: #b9ccf0;
+  --color-brand-500: #3f64b5;
+  --color-brand-600: #2d4f9c;
+  --color-brand-700: #203b78;
+  --color-brand-800: #1a3062;
+  --color-brand-900: #17243a;
+
+  --color-accent-50: #fff4ee;
+  --color-accent-100: #ffe3d3;
+  --color-accent-500: #f15a24;
+  --color-accent-600: #d84b1b;
+
+  --color-surface: #ffffff;
+  --color-canvas: #f4f6fa;
+  --color-line: #e6eaf1;
+  --color-ink: #17243a;
+  --color-muted: #64708a;
+
+  --radius-card: 1rem;
+  --shadow-card: 0 1px 2px rgb(23 36 58 / 0.04), 0 4px 16px rgb(23 36 58 / 0.05);
+  --shadow-pop: 0 12px 40px rgb(23 36 58 / 0.14);
+}
+
+html { scroll-behavior: smooth; }
+body { font-family: var(--font-sans); background: var(--color-canvas); color: var(--color-ink); -webkit-font-smoothing: antialiased; }
+:focus-visible { outline: 2px solid var(--color-brand-500); outline-offset: 2px; }
+
+@keyframes fade-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pop-in { from { opacity: 0; transform: scale(.97) translateY(6px); } to { opacity: 1; transform: none; } }
+.animate-fade-up { animation: fade-up .35s ease both; }
+.animate-fade-in { animation: fade-in .2s ease both; }
+.animate-pop-in { animation: pop-in .22s ease both; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+}
