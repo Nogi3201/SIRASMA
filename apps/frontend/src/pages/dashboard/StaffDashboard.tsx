@@ -62,7 +62,7 @@ export const StaffDashboard: React.FC = () => {
         <Card>
           <div className="flex flex-wrap items-center gap-3 border-b border-line p-4">
             <div className="relative min-w-56 flex-1 sm:max-w-xs"><Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted" /><input aria-label="Cari pengajuan" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} placeholder="Cari nama, NIM, atau kode" className={cx(fieldClass, 'pl-10')} /></div>
-            <select aria-label="Filter status reservasi" value={filter} onChange={(e) => { setFilter(e.target.value); setPage(1); }} className={cx(fieldClass, 'w-auto font-semibold')}><option value="ALL">Semua status</option>{statuses.map((s) => <option key={s} value={s}>{s.replaceAll('_', ' ')}</option>)}</select>
+            <select aria-label="Filter status reservasi" value={filter} onChange={(e) => { setFilter(e.target.value); setPage(1); }} className={cx(fieldClass, '!w-auto font-semibold')}><option value="ALL">Semua status</option>{statuses.map((s) => <option key={s} value={s}>{s.replaceAll('_', ' ')}</option>)}</select>
             <Button variant="secondary" onClick={() => void loadStaff()} disabled={loading} className="ml-auto"><RefreshCw className={cx('size-4', loading && 'animate-spin')} />Muat ulang</Button>
           </div>
           {loading ? <Spinner label="Memuat pengajuan…" /> : visibleItems.length === 0 ? <EmptyState icon={ClipboardList} title="Tidak ada pengajuan" description="Tidak ada data yang cocok dengan pencarian atau filter." /> : (

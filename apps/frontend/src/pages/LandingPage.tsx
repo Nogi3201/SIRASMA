@@ -16,15 +16,15 @@ const features = [
 ];
 const steps = [{ icon: UsersRound, title: 'Registrasi mahasiswa', detail: 'Buat akun menggunakan data kampus Anda.' }, { icon: FileText, title: 'Lengkapi profil', detail: 'Siapkan data dan dokumen yang diperlukan.' }, { icon: CalendarCheck, title: 'Ajukan reservasi', detail: 'Pilih kamar saat periode dibuka.' }, { icon: CheckCircle2, title: 'Pantau pengajuan', detail: 'Lihat perkembangan melalui dashboard.' }];
 const heroSlides = [
-  { src: '/images/ulbi/hero-1.jpg', eyebrow: 'Sistem Reservasi Asrama · ULBI Bandung', title: 'Hunian mahasiswa, tertata sejak pengajuan pertama.', copy: 'SIRASMA membantu mahasiswa Universitas Logistik & Bisnis Internasional menyiapkan pengajuan, melengkapi data, dan memantau status dalam satu alur yang jelas.', label: 'Pengajuan yang terarah' },
-  { src: '/images/ulbi/hero-2.jpg', eyebrow: 'Kampus Sarijadi · Kota Bandung', title: 'Kenali lingkungan kampus dan hunian dengan lebih mudah.', copy: 'Informasi gedung, kamar, dan periode reservasi hadir ketika dipublikasikan oleh pengelola asrama.', label: 'Informasi terverifikasi' },
-  { src: '/images/ulbi/hero-3.jpg', eyebrow: 'Satu pengalaman terintegrasi', title: 'Dari pendaftaran hingga pemantauan, semua dalam satu tempat.', copy: 'Siapkan akun SIRASMA sebelum periode reservasi dibuka dan lanjutkan proses dari dashboard Anda.', label: 'Siap digunakan mahasiswa' },
+  { src: '/images/ulbi/galeri-1.jpg', eyebrow: 'Sistem Reservasi Asrama · ULBI Bandung', title: 'Hunian mahasiswa, tertata sejak pengajuan pertama.', copy: 'SIRASMA membantu mahasiswa Universitas Logistik & Bisnis Internasional menyiapkan pengajuan, melengkapi data, dan memantau status dalam satu alur yang jelas.', label: 'Pengajuan yang terarah' },
+  { src: '/images/ulbi/galeri-2.jpg', eyebrow: 'Kampus Sarijadi · Kota Bandung', title: 'Kenali lingkungan kampus dan hunian dengan lebih mudah.', copy: 'Informasi gedung, kamar, dan periode reservasi hadir ketika dipublikasikan oleh pengelola asrama.', label: 'Informasi terverifikasi' },
+  { src: '/images/ulbi/galeri-4.jpg', eyebrow: 'Satu pengalaman terintegrasi', title: 'Dari pendaftaran hingga pemantauan, semua dalam satu tempat.', copy: 'Siapkan akun SIRASMA sebelum periode reservasi dibuka dan lanjutkan proses dari dashboard Anda.', label: 'Siap digunakan mahasiswa' },
 ];
 const gallery = [
   { src: '/images/ulbi/galeri-1.jpg', caption: 'Gedung utama kampus ULBI', className: 'sm:col-span-2 sm:row-span-2' },
-  { src: '/images/ulbi/galeri-2.jpg', caption: 'Area kampus Sarijadi', className: '' },
-  { src: '/images/ulbi/galeri-3.jpg', caption: 'Lingkungan belajar', className: '' },
-  { src: '/images/ulbi/galeri-4.jpg', caption: 'Hunian & fasilitas mahasiswa', className: 'sm:col-span-2' },
+  { src: '/images/ulbi/galeri-2.jpg', caption: 'Yayasan Pendidikan Bhakti Pos Indonesia (YPBPI)', className: '' },
+  { src: '/images/ulbi/galeri-3.jpg', caption: 'Sekolah Tinggi Manajemen Logistik Indonesia (STIMLOG)', className: '' },
+  { src: '/images/ulbi/galeri-4.jpg', caption: 'Lapangan tenis', className: 'sm:col-span-2' },
 ];
 const MAP_SRC = 'https://www.google.com/maps?q=Universitas+Logistik+dan+Bisnis+Internasional+Bandung&output=embed';
 const MAP_LINK = 'https://www.google.com/maps/search/?api=1&query=Universitas+Logistik+dan+Bisnis+Internasional+Bandung';
@@ -156,7 +156,7 @@ export const LandingPage: React.FC = () => {
 
       {/* ── CAMPUS GALLERY ── */}
       <section id="asrama" className="scroll-mt-24 py-20 sm:py-28"><div className="mx-auto max-w-7xl px-5 sm:px-8 lg:px-10">
-        <Reveal className="max-w-2xl"><Eyebrow>Kampus & Asrama</Eyebrow><h2 className="mt-3 text-3xl font-extrabold tracking-tight text-brand-700 sm:text-4xl">Lingkungan belajar dan hunian ULBI Bandung.</h2><p className="mt-4 leading-7 text-muted">Kenali suasana kampus Universitas Logistik & Bisnis Internasional. Data gedung, kamar, dan ketersediaan ditampilkan dari sistem setelah Anda masuk.</p></Reveal>
+        <Reveal className="max-w-2xl"><Eyebrow>Kampus & Asrama</Eyebrow><h2 className="mt-3 text-3xl font-extrabold tracking-tight text-brand-700 sm:text-4xl">Lingkungan belajar dan hunian ULBI Bandung.</h2><p className="mt-4 leading-7 text-muted">Kenali suasana kampus Universitas Logistik & Bisnis Internasional, YPBPI, dan STIMLOG di Bandung. Data gedung, kamar, dan ketersediaan ditampilkan dari sistem setelah Anda masuk.</p></Reveal>
         <div className="mt-10 grid auto-rows-[190px] gap-4 sm:grid-cols-4 sm:auto-rows-[200px]">
           {gallery.map((g, i) => (
             <Reveal key={g.src} delay={i * 0.08} className={cx('group', g.className)}>
