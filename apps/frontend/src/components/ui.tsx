@@ -99,15 +99,16 @@ export const EmptyState: React.FC<{ icon: React.ElementType; title: string; desc
 );
 
 /* ── Modal ── */
-export const Modal: React.FC<{ title: string; description?: string; onClose: () => void; children: React.ReactNode; size?: 'md' | 'lg'; labelledBy?: string }> = ({ title, description, onClose, children, size = 'md', labelledBy = 'modal-title' }) => {
+export const Modal: React.FC<{ title: string; description?: string; onClose: () => void; children: React.ReactNode; size?: 'md' | 'lg' | 'xl' | '2xl'; labelledBy?: string }> = ({ title, description, onClose, children, size = 'md', labelledBy = 'modal-title' }) => {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
+  const sizeClass = size === '2xl' ? 'max-w-5xl' : size === 'xl' ? 'max-w-4xl' : size === 'lg' ? 'max-w-2xl' : 'max-w-md';
   return (
     <div className="animate-fade-in fixed inset-0 z-[70] grid place-items-center bg-brand-900/40 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby={labelledBy} onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className={cx('animate-pop-in max-h-[90vh] w-full overflow-y-auto rounded-2xl bg-white p-6 shadow-pop', size === 'lg' ? 'max-w-2xl' : 'max-w-md')}>
+      <div className={cx('animate-pop-in max-h-[90vh] w-full overflow-y-auto rounded-2xl bg-white p-6 shadow-pop', sizeClass)}>
         <div className="flex items-start justify-between gap-4">
           <div><h2 id={labelledBy} className="text-lg font-bold text-ink">{title}</h2>{description && <p className="mt-1 text-sm text-muted">{description}</p>}</div>
           <button type="button" onClick={onClose} className="rounded-lg p-2 text-muted hover:bg-canvas" aria-label="Tutup"><X className="size-5" /></button>

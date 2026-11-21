@@ -44,3 +44,8 @@ prisma/migrations/
 # Testing
 coverage/
 
+# Private user data
+akun.txt
+
+# Uploaded documents and local storage
+apps/backend/storage/

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { AlertCircle, ArrowRight, Loader2 } from 'lucide-react';
+import { AlertCircle, ArrowLeft, ArrowRight, Loader2 } from 'lucide-react';
 import { Input } from '../components/Input.js';
 import { useAuth } from '../features/auth/AuthContext.js';
 import { AuthLayout } from '../layouts/AuthLayout.js';
@@ -13,6 +13,16 @@ export const LoginPage: React.FC = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleBack = () => {
+    if (window.history.state && typeof window.history.state.idx === 'number' && window.history.state.idx > 0) {
+      navigate(-1);
+    } else if (window.history.length > 1 && document.referrer && document.referrer.includes(window.location.host)) {
+      navigate(-1);
+    } else {
+      navigate('/');
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,7 +47,19 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <AuthLayout title="Masuk ke Akun Anda" subtitle="Gunakan email dan password terdaftar untuk mengakses SIRASMA">
+    <>
+      <button
+        type="button"
+        onClick={handleBack}
+        className="fixed right-4 top-4 z-40 inline-flex items-center gap-1.5 rounded-xl border border-line bg-white/90 px-3 py-1.5 text-xs font-semibold text-muted shadow-sm backdrop-blur-sm transition-all hover:border-brand-200 hover:bg-white hover:text-brand-700 active:scale-95 sm:right-6 sm:top-6"
+        aria-label="Kembali"
+        title="Kembali ke halaman sebelumnya"
+      >
+        <ArrowLeft className="size-4" />
+        <span>Kembali</span>
+      </button>
+
+      <AuthLayout title="Masuk ke Akun Anda" subtitle="Gunakan email dan password terdaftar untuk mengakses SIRASMA">
       {error && (
         <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 flex items-start space-x-3 text-red-700 text-sm">
           <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5 text-red-600" />
@@ -104,6 +126,7 @@ export const LoginPage: React.FC = () => {
         </p>
       </div>
     </AuthLayout>
+    </>
   );
 };
 

@@ -64,7 +64,7 @@ const PhotoSlot: React.FC<{ src: string; alt: string; className?: string; varian
 
 const Reveal: React.FC<{ children: React.ReactNode; delay?: number; className?: string; x?: number }> = ({ children, delay = 0, className, x = 0 }) => {
   const reduced = useReducedMotion();
-  return <motion.div className={className} initial={{ opacity: 0, y: reduced ? 0 : 28, x: reduced ? 0 : x }} whileInView={{ opacity: 1, y: 0, x: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: reduced ? 0 : 0.55, delay: reduced ? 0 : delay, ease: [0.22, 1, 0.36, 1] }}>{children}</motion.div>;
+  return <motion.div className={className} initial={{ opacity: reduced ? 1 : 0, y: reduced ? 0 : 28, x: reduced ? 0 : x }} whileInView={{ opacity: 1, y: 0, x: 0 }} viewport={{ once: true, amount: 0.15 }} transition={{ duration: reduced ? 0 : 0.55, delay: reduced ? 0 : delay, ease: [0.22, 1, 0.36, 1] }}>{children}</motion.div>;
 };
 
 const Eyebrow: React.FC<{ children: React.ReactNode; light?: boolean }> = ({ children, light }) => <p className={cx('inline-flex items-center gap-2 text-sm font-bold uppercase tracking-[.16em]', light ? 'text-orange-200' : 'text-accent-500')}><span className="h-0.5 w-6 rounded-full bg-current" />{children}</p>;
@@ -100,7 +100,7 @@ export const LandingPage: React.FC = () => {
   return <div className="min-h-screen bg-white font-sans text-ink selection:bg-orange-100 selection:text-brand-700">
     <motion.div className="fixed inset-x-0 top-0 z-[60] h-1 origin-left bg-accent-500" style={{ scaleX: progress }} />
 
-    <header className={cx('fixed inset-x-0 top-0 z-50 border-b transition-all duration-300', scrolled ? 'border-line bg-white/90 shadow-card backdrop-blur-lg' : 'border-transparent bg-white/80 backdrop-blur')}>
+    <header className={cx('fixed inset-x-0 top-0 z-50 border-b transition-all duration-300', scrolled ? 'border-line bg-white/95 shadow-card backdrop-blur-md' : 'border-line/60 bg-white/90 backdrop-blur-md')}>
       <nav className="mx-auto flex h-20 max-w-7xl items-center justify-between px-5 sm:px-8 lg:px-10" aria-label="Navigasi utama">
         <button type="button" onClick={() => scrollTo('beranda')} className="flex cursor-pointer items-center gap-3 text-left"><LogoMark className="size-10" /><span><span className="block text-lg font-extrabold leading-none tracking-tight text-brand-700">SIRASMA</span><span className="mt-1 block text-[10px] font-bold uppercase tracking-[.16em] text-accent-500">Reservasi Asrama · ULBI</span></span></button>
         <div className="hidden h-full items-center gap-7 lg:flex">{navigation.map((item) => <button key={item.id} type="button" onClick={() => scrollTo(item.id)} className={cx('relative h-full cursor-pointer text-sm font-semibold transition', active === item.id ? 'text-brand-700' : 'text-muted hover:text-brand-700')}>{item.label}{active === item.id && <motion.span layoutId="active-nav" className="absolute inset-x-0 bottom-0 h-[3px] rounded-t-full bg-accent-500" transition={{ type: 'spring', stiffness: 380, damping: 30 }} />}</button>)}</div>
@@ -113,7 +113,7 @@ export const LandingPage: React.FC = () => {
     <main>
       {/* ── HERO SLIDESHOW ── */}
       <section id="beranda" className="scroll-mt-20 pt-20">
-        <div ref={heroRef} className="relative isolate min-h-[640px] overflow-hidden bg-brand-900 lg:min-h-[calc(100svh-5rem)]" onPointerEnter={() => setPaused(true)} onPointerLeave={() => setPaused(false)} onKeyDown={(e) => { if (e.key === 'ArrowRight') next(); if (e.key === 'ArrowLeft') previous(); }} tabIndex={0} aria-roledescription="carousel" aria-label="Sorotan SIRASMA">
+        <div ref={heroRef} className="relative isolate min-h-[560px] overflow-hidden bg-brand-900 lg:min-h-[calc(100svh-5rem)]" onPointerEnter={() => setPaused(true)} onPointerLeave={() => setPaused(false)} onKeyDown={(e) => { if (e.key === 'ArrowRight') next(); if (e.key === 'ArrowLeft') previous(); }} tabIndex={0} aria-roledescription="carousel" aria-label="Sorotan SIRASMA">
           <motion.div style={{ y: parallax }} className="absolute inset-0 -top-10 -bottom-10">
             <AnimatePresence mode="sync">
               <motion.div key={slide} initial={{ opacity: 0, scale: reduced ? 1 : 1.12 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} transition={{ opacity: { duration: reduced ? 0 : 1.1 }, scale: { duration: reduced ? 0 : SLIDE_MS / 1000 + 1.5, ease: 'easeOut' } }} className="absolute inset-0">
@@ -125,21 +125,21 @@ export const LandingPage: React.FC = () => {
           <div className="absolute inset-0 bg-gradient-to-t from-brand-900/70 via-transparent to-transparent" />
           <div className="animate-float pointer-events-none absolute -right-24 top-24 size-96 rounded-full bg-accent-500/30 blur-3xl" />
 
-          <div className="relative mx-auto grid min-h-[640px] max-w-7xl items-center gap-10 px-5 py-24 sm:px-8 lg:min-h-[calc(100svh-5rem)] lg:grid-cols-[1.25fr_.75fr] lg:px-10">
+          <div className="relative mx-auto grid min-h-[560px] max-w-7xl items-center gap-10 px-5 pt-12 pb-20 sm:px-8 sm:pt-14 sm:pb-24 lg:min-h-[calc(100svh-5rem)] lg:grid-cols-[1.25fr_.75fr] lg:px-10 lg:pt-16 lg:pb-28">
             <AnimatePresence mode="wait">
               <motion.div key={slide} initial="hidden" animate="show" exit={{ opacity: 0, y: -14, transition: { duration: 0.25 } }} variants={{ hidden: {}, show: { transition: { staggerChildren: reduced ? 0 : 0.12 } } }} className="max-w-2xl text-white">
                 {[
                   <p key="e" className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 text-xs font-bold uppercase tracking-[.16em] text-orange-100 ring-1 ring-white/20 backdrop-blur"><MapPin className="size-3.5" />{current.eyebrow}</p>,
-                  <h1 key="t" className="mt-6 text-4xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl lg:text-6xl"><span className="text-shine">{current.title}</span></h1>,
-                  <p key="c" className="mt-6 max-w-xl text-base leading-7 text-slate-200 sm:text-lg">{current.copy}</p>,
-                  <div key="b" className="mt-9 flex flex-col gap-3 sm:flex-row"><motion.button whileHover={reduced ? undefined : { y: -3 }} whileTap={{ scale: 0.97 }} onClick={() => scrollTo('asrama')} className="group inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-accent-500 px-6 py-3.5 text-sm font-bold shadow-lg shadow-accent-500/30 transition hover:bg-accent-600">Jelajahi Kampus <ArrowRight className="size-4 transition group-hover:translate-x-1" /></motion.button><Link to="/login" className="inline-flex items-center justify-center rounded-xl border border-white/40 bg-white/5 px-6 py-3.5 text-sm font-bold backdrop-blur transition hover:bg-white/15">Masuk ke akun</Link></div>,
-                ].map((node, i) => <motion.div key={i} variants={{ hidden: { opacity: 0, y: reduced ? 0 : 22 }, show: { opacity: 1, y: 0, transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] } } }}>{node}</motion.div>)}
+                  <h1 key="t" className="mt-5 text-4xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl lg:text-6xl"><span className="text-shine">{current.title}</span></h1>,
+                  <p key="c" className="mt-5 max-w-xl text-base leading-7 text-slate-200 sm:text-lg">{current.copy}</p>,
+                  <div key="b" className="mt-8 flex flex-col gap-3 sm:flex-row"><motion.button whileHover={reduced ? undefined : { y: -3 }} whileTap={{ scale: 0.97 }} onClick={() => scrollTo('asrama')} className="group inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-accent-500 px-6 py-3.5 text-sm font-bold shadow-lg shadow-accent-500/30 transition hover:bg-accent-600">Jelajahi Kampus <ArrowRight className="size-4 transition group-hover:translate-x-1" /></motion.button><Link to="/login" className="inline-flex items-center justify-center rounded-xl border border-white/40 bg-white/5 px-6 py-3.5 text-sm font-bold backdrop-blur transition hover:bg-white/15">Masuk ke akun</Link></div>,
+                ].map((node, i) => <motion.div key={i} variants={{ hidden: { opacity: reduced ? 1 : 0, y: reduced ? 0 : 22 }, show: { opacity: 1, y: 0, transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] } } }}>{node}</motion.div>)}
               </motion.div>
             </AnimatePresence>
 
-            <motion.aside initial={{ opacity: 0, x: reduced ? 0 : 40 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5, duration: 0.7 }} className="animate-float hidden rounded-3xl border border-white/20 bg-white/10 p-6 text-white shadow-pop backdrop-blur-xl lg:block" aria-label="Alur singkat">
+            <motion.aside initial={{ opacity: reduced ? 1 : 0, x: reduced ? 0 : 40 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3, duration: 0.6 }} className="animate-float hidden rounded-3xl border border-white/20 bg-white/10 p-6 text-white shadow-pop backdrop-blur-xl lg:block" aria-label="Alur singkat">
               <p className="text-xs font-bold uppercase tracking-[.16em] text-orange-100">Alur reservasi</p>
-              <ul className="mt-5 space-y-4">{['Registrasi akun mahasiswa', 'Verifikasi data akademik', 'Pilih kamar & ajukan', 'Persetujuan & alokasi kamar'].map((t, i) => <motion.li key={t} initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.8 + i * 0.18 }} className="flex items-center gap-3 text-sm font-semibold"><span className="grid size-8 place-items-center rounded-full bg-accent-500 text-xs font-extrabold">{i + 1}</span>{t}</motion.li>)}</ul>
+              <ul className="mt-5 space-y-4">{['Registrasi akun mahasiswa', 'Verifikasi data akademik', 'Pilih kamar & ajukan', 'Persetujuan & alokasi kamar'].map((t, i) => <motion.li key={t} initial={{ opacity: reduced ? 1 : 0, x: reduced ? 0 : 16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 + i * 0.15 }} className="flex items-center gap-3 text-sm font-semibold"><span className="grid size-8 place-items-center rounded-full bg-accent-500 text-xs font-extrabold">{i + 1}</span>{t}</motion.li>)}</ul>
               <Link to="/register" className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-white py-3 text-sm font-bold text-brand-700 transition hover:bg-orange-50">Mulai sekarang <ArrowRight className="size-4" /></Link>
             </motion.aside>
           </div>
@@ -183,17 +183,45 @@ export const LandingPage: React.FC = () => {
       </div></section>
 
       {/* ── ABOUT + MAP ── */}
-      <section id="tentang" className="scroll-mt-24 bg-gradient-to-br from-brand-700 to-brand-900 py-20 text-white sm:py-28"><div className="mx-auto grid max-w-7xl items-center gap-12 px-5 sm:px-8 lg:grid-cols-2 lg:px-10">
+      <section id="tentang" className="scroll-mt-24 bg-gradient-to-br from-brand-700 to-brand-900 py-16 text-white sm:py-20"><div className="mx-auto grid max-w-7xl items-center gap-12 px-5 sm:px-8 lg:grid-cols-2 lg:px-10">
         <Reveal><Eyebrow light>Tentang SIRASMA</Eyebrow><h2 className="mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl">Sistem reservasi untuk pengalaman hunian kampus yang lebih jelas.</h2><p className="mt-5 max-w-xl leading-7 text-slate-200">SIRASMA mendukung pengajuan asrama mahasiswa ULBI melalui informasi, verifikasi, dan status yang tersusun dalam satu sistem.</p>
           <div className="mt-8 flex items-start gap-4 rounded-2xl border border-white/15 bg-white/10 p-5 backdrop-blur"><span className="grid size-11 shrink-0 place-items-center rounded-xl bg-accent-500"><MapPin className="size-5" /></span><div><p className="text-sm font-bold uppercase tracking-[.12em] text-orange-200">Universitas Logistik & Bisnis Internasional</p><p className="mt-1 text-sm leading-6 text-slate-200">Jalan Sariasih No. 54, Sarijadi, Kota Bandung, Jawa Barat 40151.</p><a href={MAP_LINK} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1.5 text-sm font-bold text-white underline-offset-4 hover:underline">Buka di Google Maps <ExternalLink className="size-3.5" /></a></div></div></Reveal>
         <Reveal delay={0.12} x={30}><div className="overflow-hidden rounded-3xl border border-white/20 bg-white shadow-pop"><iframe title="Peta lokasi ULBI Bandung" src={MAP_SRC} loading="lazy" referrerPolicy="no-referrer-when-downgrade" className="h-80 w-full border-0 sm:h-96" /></div></Reveal>
       </div></section>
-
-      {/* ── CTA ── */}
-      <Reveal className="px-5 py-16 sm:px-8 lg:px-10"><div className="relative mx-auto flex max-w-7xl flex-col justify-between gap-6 overflow-hidden rounded-3xl border border-line bg-canvas px-7 py-12 shadow-card sm:px-12 lg:flex-row lg:items-center"><div className="pointer-events-none absolute -right-10 -top-16 size-56 rounded-full bg-accent-500/15 blur-2xl" /><div className="relative"><Eyebrow>Mulai pengajuan Anda</Eyebrow><h2 className="mt-3 max-w-xl text-2xl font-extrabold tracking-tight text-brand-700 sm:text-3xl">Siapkan akun SIRASMA sebelum periode reservasi dibuka.</h2></div><div className="relative flex gap-3"><Link to="/login" className="rounded-xl border border-brand-700 px-6 py-3 text-sm font-bold text-brand-700 transition hover:bg-white">Masuk</Link><Link to="/register" className="rounded-xl bg-accent-500 px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-accent-600 hover:shadow-pop">Daftar sekarang</Link></div></div></Reveal>
     </main>
 
-    <footer className="border-t border-line bg-white"><div className="mx-auto flex max-w-7xl flex-col justify-between gap-6 px-5 py-10 sm:px-8 md:flex-row lg:px-10"><div className="flex items-center gap-3"><LogoMark className="size-10" /><div><p className="font-extrabold text-brand-700">SIRASMA</p><p className="mt-0.5 text-xs font-bold uppercase tracking-[.14em] text-accent-500">Sistem Reservasi Asrama · ULBI</p></div></div><div className="flex flex-wrap items-center gap-x-5 gap-y-3 text-sm font-semibold text-muted">{navigation.map((item) => <button key={item.id} onClick={() => scrollTo(item.id)} className="cursor-pointer transition hover:text-brand-700">{item.label}</button>)}<Link to="/login" className="transition hover:text-brand-700">Masuk</Link></div></div><p className="border-t border-line py-4 text-center text-xs text-muted">&copy; {new Date().getFullYear()} SIRASMA · Universitas Logistik & Bisnis Internasional, Bandung.</p></footer>
+    <footer className="border-t border-line bg-white">
+      <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-6 px-5 py-8 sm:px-8 md:flex-row lg:px-10">
+        <div className="flex items-center gap-3">
+          <LogoMark className="size-9 shrink-0" />
+          <div>
+            <p className="font-extrabold leading-none text-brand-700">SIRASMA</p>
+            <p className="mt-1 text-[11px] font-semibold text-muted">
+              Sistem Informasi Reservasi Asrama · ULBI Bandung
+            </p>
+          </div>
+        </div>
+
+        <nav className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs font-semibold text-muted" aria-label="Navigasi footer">
+          {navigation.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => scrollTo(item.id)}
+              className="cursor-pointer transition hover:text-brand-700"
+            >
+              {item.label}
+            </button>
+          ))}
+          <Link to="/login" className="transition hover:text-brand-700">Masuk ke Akun</Link>
+          <Link to="/register" className="font-bold text-accent-500 transition hover:text-accent-600">Daftar Akun</Link>
+        </nav>
+      </div>
+
+      <div className="border-t border-line/70 bg-canvas/60 py-3.5 px-5 text-center text-xs text-muted">
+        <p>&copy; {new Date().getFullYear()} SIRASMA · Universitas Logistik & Bisnis Internasional (ULBI), Bandung. Seluruh hak cipta dilindungi.</p>
+      </div>
+    </footer>
 
     <AnimatePresence>{scrolled && <motion.button initial={{ opacity: 0, y: 12, scale: 0.8 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 12, scale: 0.8 }} whileHover={{ y: -3 }} onClick={() => scrollTo('beranda')} className="fixed bottom-6 right-6 z-40 grid size-12 cursor-pointer place-items-center rounded-full bg-brand-700 text-white shadow-pop hover:bg-brand-800" aria-label="Kembali ke atas"><ArrowUp className="size-5" /></motion.button>}</AnimatePresence>
   </div>;

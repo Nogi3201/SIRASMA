@@ -8,6 +8,9 @@ import { PrismaModule } from './prisma/prisma.module.js';
 import { DashboardModule } from './dashboard/dashboard.module.js';
 import { ManagementModule } from './management/management.module.js';
 import { ReservationsModule } from './reservations/reservations.module.js';
+import { DocumentsModule } from './documents/documents.module.js';
+import { OccupancyModule } from './occupancy/occupancy.module.js';
+import { PaymentsModule } from './payments/payments.module.js';
 import { validateEnvironment } from './config/environment.validation.js';
 
 @Module({
@@ -21,6 +24,9 @@ import { validateEnvironment } from './config/environment.validation.js';
     DashboardModule,
     ManagementModule,
     ReservationsModule,
+    DocumentsModule,
+    OccupancyModule,
+    PaymentsModule,
     AuthModule,
     HealthModule,
   ],

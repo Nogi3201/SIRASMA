@@ -9,6 +9,11 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
 
+  // Base64 transport expands a 5 MB file to ~6.7 MB. Keep a bounded parser
+  // limit so valid document uploads are accepted without allowing large bodies.
+  (app as any).useBodyParser('json', { limit: '7mb' });
+
+
   // Parse cookies (HttpOnly refresh token)
   app.use(cookieParser());
 
